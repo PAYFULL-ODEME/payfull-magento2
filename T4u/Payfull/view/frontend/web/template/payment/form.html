@@ -1,0 +1,184 @@
+<!--
+/**
+ * Copyright © 2016 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+    <div class="payment-method-title field choice">
+        <input type="radio"
+               name="payment[method]"
+               class="radio"
+               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
+        <label class="label" data-bind="attr: {'for': getCode()}">
+            <span data-bind="text: getTitle()"></span>
+        </label>
+    </div>
+
+    <div class="payment-method-content">
+        <!-- ko foreach: getRegion('messages') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+        <!--/ko-->
+        <!-- <div class="payment-method-billing-address"> -->
+            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
+        <!-- </div> -->
+        
+<form class="form" id="payfull-form" method="post" data-mage-init='{"validation": {}}'>
+    <ul class="payfull-tabs">
+      <li><a href="javascript:void(0)" class="tablinks active" onclick="openPaymentMethod(event, 'cardPaymentMethod')">Credit card/Debit card</a></li>
+      <!-- ko if: isEnableBKM() -->
+      <li>
+        <a href="javascript:void(0)" class="tablinks bkmTab" onclick="openPaymentMethod(event, 'bkmPaymentMethod')">
+          <img class="bkmImage" src="http://payfull.net/plugins/oc/v2.x/image/payfull//BKM.png">
+        </a>
+      </li>
+      <!-- /ko -->
+    </ul>
+
+    <div id="cardPaymentMethod" class="tabcontent" style="display: block;">
+      <div class="payfull_form-group">
+        <label class="payfull-label required" for="input-cc-type">Name on Card</label>
+        <div class="payfull-input">
+          <input name="cc_name" value="" placeholder="Name on Card" id="input-cc-name" class="form-control" type="text" data-validate="{'required-entry':true, 'validate-alphanum-with-spaces':true}">
+        </div>
+      </div>
+         
+      <div class="payfull_form-group">
+        <label class="payfull-label" for="input-cc-number">Credit Card Number</label>
+        <div class="payfull-input">
+          <input name="cc_number" value="" placeholder="Credit Card Number" id="input-cc-number" class="input-cc-number-not-supported form-control" maxlength="16" type="text" data-validate="{'required-entry':true,
+          'validate-cc-number':true, 'validate-number':true}" oninput="setInputImage(event, this.value);",
+          data-bind="event: {keyup: ajaxCall}">
+        </div>
+      </div>
+      <div class="payfull_form-group">
+        <label class="payfull-label" for="input-cc-start-date">Expiration Date</label>
+        <div class="payfull-select_month">
+          <select name="cc_month" id="input-cc-month" class="select-control" data-validate="{'validate-select':true}">
+            <option value="">Month</option>
+            <option value="01">01</option>
+            <option value="02">02</option>
+            <option value="03">03</option>
+            <option value="04">04</option>
+            <option value="05">05</option>
+            <option value="06">06</option>
+            <option value="07">07</option>
+            <option value="08">08</option>
+            <option value="09">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+        </div>
+        <div class="payfull-select_year">
+          <select name="cc_year" id="input-cc-year" class="select-control" data-validate="{'validate-select':true}">
+            <option value="">Year</option>
+            <option value="2017">2017</option>
+            <option value="2018">2018</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+            <option value="2031">2031</option>
+            <option value="2032">2032</option>
+            <option value="2033">2033</option>
+          </select>
+        </div>
+      </div>
+      <div class="payfull_form-group">
+        <label class="payfull-label" for="input-cc-cvv2">Card Verification Number</label>
+        <div class="payfull-input">
+          <input name="cc_cvc" value="" placeholder="Card Verification Number" id="input-cc-cvc" class="form-control" 
+          maxlength="4" type="text" data-validate="{'validate-number':true, 'required-entry':true}">
+        </div>
+      </div>
+      <div class="payfull_form-group installments-wrapper">
+        <label class="payfull-label" for="input-cc-start-date">Installments</label>
+        <div class="payfull-input">
+          <div id="installment_table_id">
+            <div class="installmet_head">
+              <div class="install_head_label add_space"><img id="bankImage" class="bank_photo" src=""></div>
+              <div class="install_head_label">Installment</div>
+              <div class="install_head_label">Amount / Month</div>
+              <div class="install_head_label">Total</div>
+            </div>
+            <div class="installment_body" id="installment_body">
+              <div class="installment_row" data-bind="foreach: installment_list_amount">
+                <div class="install_body_label installment_radio">
+                <input rel="1" class="installment_radio" id="installment_radio" checked="" name="installments" value="1" type="radio"></div>
+                <div class="install_body_label installment_lable_code">
+                  <span data-bind="text: installment"></span>
+                </div>
+                <div class="install_body_label">
+                  <span data-bind="text: amount"></span>
+                </div>
+                <div class="install_body_label final_commi_price">
+                  <span data-bind="text: total"></span>
+                </div>
+              </div>
+            </div>
+            <div class="installment_footer"></div>
+          </div>
+        </div>
+        <div class="extra_installment" id="extra_installment_dropdown"></div>
+      </div>
+      <input name="use3d" value="0" type="hidden">
+      <!-- ko if: isEnable3DSecure() -->
+      <div class="payfull_form-group use-3d-wrapper" style="">
+        <div class="payfull-input">
+          <div class="payfull-checkbox">
+            <label class="payfull-label empty-payfull_label"></label>
+            <label class="payfull-label_checkbox">
+              <input name="use3d" id="use3d" value="1" data-bind="click: is3DChecked" type="checkbox">
+              Use 3D secure Payments System
+            </label>
+          </div>
+        </div>
+      </div>
+      <!-- /ko -->
+      <div class="error-message"></div>
+    </div><!-- cardPaymentMethod end -->
+
+    <div id="bkmPaymentMethod" class="tabcontent">
+      <p>BKM Express is a payment system that makes online shopping fast, easy and joyful, developed with BKM, banks and leading companies of e-commerce area. Card owners can shop without sharing any card information online by saving their cards on BKM Express. The places of business that accept card on e-commerce websites can approach more customers as a Member Place of Business of BKM Express. </p> 
+
+      <input type="hidden" id="useBKM" name="useBKM" value="0"/>
+      <div class="error-message-bkm"></div>
+    </div>
+    <!-- bkmPaymentMethod end -->
+    <!-- <div class="actions">      
+       <div class="col-sm-6">
+           <button id="checkout_button" class="checkout-actions button btn-cl-cfg-active" data-bind="click:ajaxCall, i18n:'Submit'"></button>
+       </div>
+   </div> -->
+   <input type="submit" id="payfull_submit"  style="display:none" />
+
+  </form>
+        
+        
+
+        <div class="actions-toolbar">
+            <div class="primary">
+                <button class="action primary checkout"
+                        type="submit"
+                        data-bind="
+                        click: submitForm,
+                        attr: {title: $t('Place Order')}
+                        ">
+                    <span data-bind="i18n: 'Place Order'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

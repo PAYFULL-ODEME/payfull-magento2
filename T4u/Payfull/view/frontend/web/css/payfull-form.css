@@ -1,0 +1,213 @@
+/* Style the list */
+ul.payfull-tabs, ul.payfull-tabs li a, .tabcontent {font-family: "Lato", sans-serif;}
+ul.payfull-tabs {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+/* Float the list items side by side */
+ul.payfull-tabs li {float: left;margin-bottom: 0;}
+
+/* Style the links inside the list items */
+ul.payfull-tabs li a {
+    display: inline-block;
+    color: black;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: 0.3s;
+    font-size: 17px;
+}
+
+/* Change background color of links on hover */
+ul.payfull-tabs li a:hover {background-color: #ddd;}
+
+/* Create an active/current tablink class */
+ul.payfull-tabs li a:focus, ul.payfull-tabs li a.active {background-color: #ccc;}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 15px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+.bkmImage {
+    max-width: 125px;
+}
+.bkmTab {
+    padding: 2px 0 0 !important;
+}
+/* payfull css set */
+.payfull_form-group {
+    margin-bottom: 15px;
+    max-width: 800px;
+    width: 100%;
+}
+.payfull-label, .payfull-checkbox label {
+    font-size: 12px;
+    font-weight: normal;
+}
+.payfull-label {
+    line-height: 38px;
+    margin-right: 10px;
+    text-align: right;
+    vertical-align: top;
+    width: 180px;
+}
+.payfull-label::before {
+    color: #ff0000;
+    content: "* ";
+    font-weight: bold;
+}
+.empty-payfull_label.payfull-label::before {
+    content: "";
+}
+.payfull-label_checkbox {
+    line-height: 20px;
+    vertical-align: top;
+}
+.payfull-label, .payfull-input, .payfull-select_month, .payfull-select_year {
+    display: inline-block;
+}
+.payfull-input {
+    width: 464px;
+}
+.installments-wrapper .payfull-input {
+    width: 490px;
+}
+.payfull-input input[type="text"] {
+    background-color: #ffffff;
+    background-image: none;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+    color: #555555;
+    display: block;
+    font-size: 14px;
+    height: 34px;
+    line-height: 1.42857;
+    padding: 6px 12px;
+    transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
+    width: 100%;
+    font-size: 12px;
+}
+.payfull-select_month {
+    margin-right: 20px;
+    width: 233px;
+}
+.payfull-select_year {
+    width: 233px;
+}
+.payfull-select_month .select-control, .payfull-select_year .select-control {
+    background-color: #ffffff;
+    background-image: none;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+    color: #555555;
+    display: block;
+    font-size: 14px;
+    height: 34px;
+    line-height: 1.42857;
+    padding: 6px 12px;
+    transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
+    width: 100%;
+    font-size: 12px;
+}
+.install_body_label.installment_radio, .installmet_head .install_head_label.add_space {
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    width: 10%;
+}
+.installmet_head .install_head_label {
+    border-bottom: 2px solid #d2d2d2;
+    float: left;
+    font-weight: bold;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    width: 30%;
+}
+.install_body_label {
+    border-bottom: 1px solid #d2d2d2;
+    float: left;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    width: 30%;
+}
+#installment_table_id {
+    background-color: #eeeeee;
+    border: 1px solid;
+    border-radius: 5px;
+    margin-top: 10px;
+    padding: 10px;
+}
+.installment_body, .installment_footer {
+    clear: both;
+}
+.install_head_label, .install_body_label {
+    font-size: 14px;
+}
+#bkmPaymentMethod p {
+    margin: 0;
+}
+.payfull-input input.input-cc-number-not-supported[type="text"] {
+    background: rgba(0, 0, 0, 0) url("payfull_creditcard_not_supported.png") no-repeat scroll right center / 8% auto;
+    float: left;
+}
+.joker {
+    border-radius: 25px;
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+    border-bottom-left-radius: 25px;
+    font-weight: 600;
+    padding: 3px 10px;
+    background: #ff9800;
+    color: white;
+    text-transform: uppercase;
+    height: 20px;
+    line-height: 20px;
+    margin: 5px auto;
+    max-width: 100px;
+}
+@media screen and (max-width: 767px) {
+    .payfull_form-group {
+        margin-bottom: 5px;
+    }
+    .payfull-label,
+    .payfull-input {
+        margin-right: 0;
+        text-align: left;
+        width: 100%;
+    }
+    .payfull-input input[type="text"] {
+        width: 95.5%;
+    }
+    .installments-wrapper .payfull-input {
+        width: 100%;
+    }
+    #installment_table_id {
+        margin-top: 0;
+    }
+}
+@media screen and (max-width: 639px) {
+    .payfull-input input[type="text"] {
+        width: 91.5%;
+    }
+    .payfull-select_month {
+        margin-bottom: 10px;
+        margin-right: 0;
+    }
+    .installmet_head .install_head_label {
+        font-size: 11px;
+    }
+}
+/* payfull css set end */

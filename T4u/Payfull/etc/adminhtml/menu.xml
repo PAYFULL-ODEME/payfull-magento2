@@ -1,0 +1,6 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../Backend/etc/menu.xsd">
+    <menu>
+        <add id="T4u_Payfull::payfullhistory" title="Payfull Histroy" module="T4u_Payfull" sortOrder="50" resource="T4u_Payfull::payfullhistory"/>
+        <add id="T4u_Payfull::manage_items" title="Transaction History" module="T4u_Payfull" sortOrder="10" parent="T4u_Payfull::payfullhistory" action="payfull/payfullhistory/" resource="T4u_Payfull::payfullhistory"/>
+    </menu>
+</config>

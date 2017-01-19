@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="PayfullFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">\T4u\Payfull\Model\Ui\ConfigProvider::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">T4u\Payfull\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayfullValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">PayfullCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <virtualType name="PayfullConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">\T4u\Payfull\Model\Ui\ConfigProvider::CODE</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Logger, initialized with SamplePaymentGatewayConfig -->
+    <virtualType name="PayfullLogger" type="Magento\Payment\Model\Method\Logger">
+        <arguments>
+            <argument name="config" xsi:type="object">PayfullConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="T4u\Payfull\Gateway\Http\Client\ClientMock">
+        <arguments>
+            <argument name="logger" xsi:type="object">PayfullLogger</argument>
+        </arguments>
+    </type>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="PayfullCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="authorize" xsi:type="string">PayfullAuthorizeCommand</item>
+                <item name="capture" xsi:type="string">PayfullCaptureCommand</item>
+                <item name="void" xsi:type="string">PayfullVoidCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorize command -->
+    <virtualType name="PayfullAuthorizeCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayfullAuthorizationRequest</argument>
+            <argument name="handler" xsi:type="object">PayfullResponseHandlerComposite</argument>
+            <argument name="transferFactory" xsi:type="object">T4u\Payfull\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">T4u\Payfull\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorization Request -->
+    <virtualType name="PayfullAuthorizationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">T4u\Payfull\Gateway\Request\AuthorizationRequest</item>
+                <item name="mockData" xsi:type="string">T4u\Payfull\Gateway\Request\MockDataRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="T4u\Payfull\Gateway\Request\AuthorizationRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PayfullConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Capture command -->
+    <virtualType name="PayfullCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">T4u\Payfull\Gateway\Request\CaptureRequest</argument>
+            <argument name="handler" xsi:type="object">T4u\Payfull\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">T4u\Payfull\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">T4u\Payfull\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">T4u\Payfull\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Capture Request -->
+    <type name="T4u\Payfull\Gateway\Request\CaptureRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PayfullConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Void command -->
+    <virtualType name="PayfullVoidCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">T4u\Payfull\Gateway\Request\VoidRequest</argument>
+            <argument name="handler" xsi:type="object">T4u\Payfull\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">T4u\Payfull\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">T4u\Payfull\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">T4u\Payfull\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Void Request -->
+    <type name="T4u\Payfull\Gateway\Request\VoidRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">PayfullConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Response handlers -->
+    <virtualType name="PayfullResponseHandlerComposite" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="txnid" xsi:type="string">T4u\Payfull\Gateway\Response\TxnIdHandler</item>
+                <item name="fraud" xsi:type="string">T4u\Payfull\Gateway\Response\FraudHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="PayfullValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayfullConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayfullConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">PayfullConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="T4u\Payfull\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">PayfullConfig</argument>
+        </arguments>
+    </type>
+
+</config>
