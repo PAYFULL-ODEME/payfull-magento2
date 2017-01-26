@@ -21,18 +21,30 @@ class SaleBKM extends Action
 
     private $result;
 
-    private $helper;    
+    private $helper; 
+
+    private $_scopeConfig;
+
+    private $_crypt;  
+
+    protected $checkoutSession; 
 
     public function __construct(
         Context $context,
         JsonFactory    $resultJsonFactory,
         Payfullapi $helper,
-        HistoryFactory $historyFactory
+        HistoryFactory $historyFactory,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Framework\Encryption\Encryptor $crypt,
+        \Magento\Checkout\Model\Session $checkoutSession
     ) {
         parent::__construct($context);
         $this->helper = $helper;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->_historyFactory = $historyFactory;
+        $this->_scopeConfig = $scopeConfig;   
+        $this->_crypt = $crypt;
+        $this->checkoutSession = $checkoutSession;
     }
     /**
      * @inheritdoc
@@ -41,6 +53,23 @@ class SaleBKM extends Action
     {
         // echo "ssss";exit;
         // print_r($_POST);
+        $apiUname = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_username');
+        if (!$apiUname) {
+            throw new LocalizedException(__('No Api username set. transaction will not proceed.'));
+        }
+        
+        $password = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_password');
+        if (!$password) {
+            throw new LocalizedException(__('No Password api set. transaction will not proceed.'));
+        }
+
+        $api_url = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_url');
+        if (!$api_url) {
+            throw new LocalizedException(__('No URL api set. transaction will not proceed.'));
+        }
+        $apiUname = $this->_crypt->decrypt($apiUname);
+        $password = $this->_crypt->decrypt($password);
+
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
 
@@ -51,20 +80,22 @@ class SaleBKM extends Action
         $baseUrl = $storeManager->getStore()->getBaseUrl();
         $defaults = array(
             "bank_id"         => 'BKMExpress',
-            "return_url"      => $baseUrl.'/payfull/payment/ReturnBKM.php' 
+            "return_url"      => $baseUrl.'/payfull/payment/ReturnBKM' 
         );
         $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
-        // $this->result = $this->helper->sendSale($defaults, 'BKM');
-
         $defaults = array_merge($defaults, $_POST);
+        $params = $this->helper->_createParmListSale($apiUname, $defaults, '');
 
-        $params = $this->helper->_createParmListSale('api_merch', $defaults, 'SaleInstallment');
-
-        $this->result = $this->helper->bindCurl($params, 'pass123', 'https://dev.payfull.com/integration/api/v1');
-
-        $this->result = json_decode($this->result);        
-        
+        $this->result = $this->helper->bindCurl($params, $password, $api_url);
+        $this->result = json_decode($this->result);
+        // echo "ddddd";        
+        // var_dump($this->result);exit;
+        if(is_string($this->result) && strpos($this->result, '<html')) {
+            $this->checkoutSession->setPayfull([
+                'html'=>$this->result
+            ]);
+        }
         $resultj = $this->resultJsonFactory->create();
         // return $resultj->setData($this->result);
         /***create and save**/
@@ -82,7 +113,7 @@ class SaleBKM extends Action
             break;
         }
         // add in if last && $this->result->status === 1
-        if(isset($this->result) ){
+        if(isset($this->result) && is_object($this->result)) {
             foreach ($this->result as $key => $value) {
                 foreach ($field as $keys) 
                 {
@@ -105,8 +136,8 @@ class SaleBKM extends Action
                 }
             }
             $historyModel->save();
+            return $resultj->setData($this->result);
         }
         
-        return $resultj->setData($this->result);
     }
 }

@@ -88,7 +88,7 @@ class InstallSchema implements InstallSchemaInterface
                 )
                 ->addColumn(
                     'order_id',
-                    Table::TYPE_INTEGER,
+                    Table::TYPE_TEXT,
 					64,                 
                     [],
                     'Order Id'
@@ -189,29 +189,27 @@ class InstallSchema implements InstallSchemaInterface
             $installer->getConnection()->createTable($table);
         }
 		$installer->endSetup();
-		/** @var \Magento\Sales\Setup\SalesSetup $salesSetup */
-        // $salesSetup = $this->salesSetupFactory->create(['setup' => $setup]);
 
-
-        /**
-         * Remove previous attributes
-         */
-        // $attributes =       ['payfull_commission'];
-        // foreach ($attributes as $attr_to_remove){
-        //     $salesSetup->removeAttribute(\Magento\Sales\Model\Order::ENTITY,$attr_to_remove);
-
-        // }
-        $installer = $setup;
-        $installer->startSetup();
         /**
          * Add 'payfull_commission' attributes for order
          */
+        $installer = $setup;
+        $installer->startSetup();
         $options = ['type' => 'text', 'visible' => false, 'required' => false, 'comment' => 'Payfull Commission'];
 
         $installer->getConnection()->addColumn($installer->getTable("sales_order"), "payfull_commission", $options);
         
-        // $salesSetup->addAttribute('order', 'payfull_commission', $options);
- 
+        $installer->endSetup();
+        
+        /**
+         * Add 'payfull_commission' attributes to quote
+         */
+        $installer = $setup;
+        $installer->startSetup();
+        $options = ['type' => 'text', 'visible' => false, 'required' => false, 'comment' => 'Payfull Commission'];
+
+        $installer->getConnection()->addColumn($installer->getTable("quote"), "payfull_commission", $options);
+        
         $installer->endSetup();
     }
 }

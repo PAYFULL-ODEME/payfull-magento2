@@ -33,7 +33,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
 
     public $issuer_bank_id;
 	
-	public $resultresponse;
+    public $resultresponse;
 
     public $grandTotal;
 
@@ -87,13 +87,52 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
         $response = curl_exec($ch);
-
+        
         $curlerrcode = curl_errno($ch);
         $curlerr = curl_error($ch);
-		
-		return $response;
+        /* Check response is json or html */
+        if(is_string($response) && strpos($response, '<html')) {
+            return json_encode($response);            
+        }else{
+              return $response;
+        }
         
     }
+    public function cancelOrder($defaults)
+    {
+        $getClientIp = $this->getClientIp();
+        $language = $this->getLanguage();
+        // echo $getClientIp."ssss".$language;
+        // var_dump($defaults);exit;
+        $apiUname = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_username');
+        if (!$apiUname) {
+            throw new LocalizedException(__('No Api username set. transaction will not proceed.'));
+        }
+        
+        $password = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_password');
+        if (!$password) {
+            throw new LocalizedException(__('No Password api set. transaction will not proceed.'));
+        }
+
+        $api_url = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_url');
+        if (!$api_url) {
+            throw new LocalizedException(__('No URL api set. transaction will not proceed.'));
+        }
+        $apiUname = $this->_crypt->decrypt($apiUname);
+        $password = $this->_crypt->decrypt($password);
+
+        $params = array(           
+            "language"        => $language,
+            "merchant"        => $apiUname,
+            "client_ip"       => $getClientIp
+         );
+        $params = array_merge($params, $defaults);
+        // var_dump($params);exit;
+        $response = $this->helper->bindCurl($params, $password, $api_url);
+
+        return $response; 
+    }
+
     public function send($cc_no_first_six, $get_param)
     {   
         $responseList='';
@@ -124,27 +163,23 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->grandTotal = $cart->getQuote()->getGrandTotal();
 
-        // $params = $this->_createParmList($apiUname,$cc_no_first_six,'ExtraInstallments');
-
-        // get params 
         $params = $this->_createParmList($apiUname,$cc_no_first_six,$get_param);
         // send curl call 
         $response = $this->bindCurl($params, $password, $api_url);
         $getMinOrderTotal = $this->getMinOrderTotal();
         
         // get cart order grandtotal
-         
- 
-        if($this->getInstallment() == '1' && $this->grandTotal >= $getMinOrderTotal){ 
-            // if($this->grandTotal >= $getMinOrderTotal){         
+        
+        if($this->getInstallment() == '1'){ 
+            if($this->grandTotal >= $getMinOrderTotal){         
                 $params = $this->_createParmList($apiUname,$cc_no_first_six,'Installments');            
-                $responseList = $this->bindCurl($params, $password, $api_url);          
+                $responseList = $this->bindCurl($params, $password, $api_url);                 
                 $response = json_decode($response);
                 $responseList = json_decode($responseList);
-                
+               
                 foreach ($responseList->data as $index) {               
                     if($index->bank == $response->data->bank_id){
-                        $this->installment = count($index->installments);
+                        $this->installment = count($index->installments)-1;
                         // echo $this->installment;exit;
                         $this->bankId = $response->data->bank_id;
                         $this->gateway = $index->gateway;
@@ -171,10 +206,9 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
                             //             }
                             //     }
                             // }
+                        }
                     }
                 }
-                
-
             }
         }else{          
             $this->resultresponse = $response;
@@ -268,14 +302,14 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         // send curl call 
         $response = $this->bindCurl($params, $password, $api_url);        
         // get cart order grandtotal     
-        $params = $this->_createParmListSale($apiUname, $defaults, 'SaleInstallment');
+        // $params = $this->_createParmListSale($apiUname, $defaults, 'SaleInstallment');
 
-        $responseInstallment = $this->bindCurl($params, $password, $api_url);
+        // $responseInstallment = $this->bindCurl($params, $password, $api_url);
         $response = json_decode($response);
-        $responseInstallment = json_decode($responseInstallment);
+        // $responseInstallment = json_decode($responseInstallment);
     
         $this->resultresponse = $response;       
-        $this->resultresponse = $responseInstallment;       
+        // $this->resultresponse = $responseInstallment;       
         return $this->resultresponse;
     }
     /**
@@ -305,22 +339,12 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
 
             "passive_data"  => '####aaaa',//[optional]            
          );
-        if($saleType == 'Sale'){
-            // $use3dArray = array("use3d" => $use3d);
-            // $params = array_merge($params, $use3dArray);
-            if($defaults['use3d'] == 1){
-                $extraParam = array(
-                    "return_url"      => $this->baseUrl.'/payfull/payment/Return3D.php' 
-                    );
-                $params = array_merge($params, $extraParam);
-            }
-        }      
-        // if($saleType == 'SaleInstallment'){
-        //         $extraParam = array(
-        //             "gateway"         => $this->gateway,
-        //             "bank_id"         => $this->bankId);
-        //          $params = array_merge($params, $extraParam);                    
-        // }      
+        if(isset($defaults['use3d']) && $defaults['use3d'] == 1){
+            $extraParam = array(
+                "return_url"      => $this->baseUrl.'/payfull/payment/Return3D' 
+            );
+            $params = array_merge($params, $extraParam);
+        }     
         $params = array_merge($defaults, $params);
         // echo "<pre>";
         // print_r($params);
@@ -404,3 +428,5 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
 		return $ipaddress;
 	}
 }
+
+?>

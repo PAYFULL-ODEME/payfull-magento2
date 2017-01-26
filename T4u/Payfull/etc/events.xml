@@ -7,7 +7,13 @@
 -->
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <event name="payment_method_assign_data">
-        <observer name="payfull_data_assign" instance="T4u\Payfull\Observer\DataAssignObserver" />
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="payfull_comission_assign" instance="T4u\Payfull\Observer\DataAssignObserver" />
+    </event>
+    <event name="sales_order_payment_cancel">
+        <observer name="payfull_cancel_order" instance="T4u\Payfull\Observer\OrderCancelObserver" />
+    </event>
+    <event name="sales_order_payment_refund">
+        <observer name="payfull_refund_order" instance="T4u\Payfull\Observer\OrderRefundObserver" />
     </event>
 </config>

@@ -11,9 +11,9 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\Result\JsonFactory;
 use T4u\Payfull\Helper\Payfullapi;
 /**
- * Class Return3D
+ * Class RedirectAction
  */
-class Return3D extends Action
+class RedirectAction extends Action
 {
      
     private $result;
@@ -38,10 +38,14 @@ class Return3D extends Action
      */
     public function execute()
     {
-        /*$payfull = $this->checkoutSession->getPayfull();
-        echo $payfull['html'];*/
-        print_r($_REQUEST);exit;
-        echo "3D Secure Payment Successful";
+        $payfull = $this->checkoutSession->getPayfull();
+        if(isset($payfull['html'])){
+            $html = $payfull['html'];
+            unset($payfull['html']);
+            echo $html;
+            exit;    
+        }
+        
     }
    
 }

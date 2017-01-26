@@ -24,8 +24,8 @@ define(
         var totals = quote.totals();
         var grandtotal_first = 0;
         var grandtotal = 0;
-        var month_inst = 0;
-        var total_inst = 0;
+        /*var month_inst = 0;
+        var total_inst = 0;*/
         var count = 0;
         var use3D = 0;
         var result_cc_month = 0;
@@ -36,11 +36,15 @@ define(
         var url_cc = url.build('payfull/payment/index');
         var url_submit = url.build('payfull/payment/cardinfo');
         var url_bkm = url.build('payfull/payment/salebkm');
+        var url_redirect = url.build('payfull/payment/redirectaction');
         var bank_id = '';
         var gateway = '';
         var campaign_id = new Array();
+        var per_month_value = new Array();
+        var total_value = new Array();
         var extra_installments = new Array();
         var installment = 1;
+        var baseinstallment=1;
         if (totals) {
             grandtotal = totals.grand_total;
             var month_inst = totals.grand_total;
@@ -116,95 +120,133 @@ define(
                 var $form = $('#' + this.getCode() + '-form');
                 return $form.validation() && $form.validation('isValid');
             },
-            getInstallment: function(){
+            /*getInstallment: function(){
                
-            },
+            },*/
             
             ajaxCall: function(){                        
                 var min_order = this.getMinOrderTotal();
                 var cc = $('#input-cc-number').val();
-                //var cc_bin = cc.substring(0, 6);
-                var cc_bin_length = parseInt(cc.length);
-                if(cc_bin_length == 6){                      
-                    var data= {cc:cc_bin}
+                var prevcno = $('#nolen').val();
+                var callflag = $('#callflag').val();
+                prevcno = prevcno.substring(0, 5);
+                var cc_bin = cc.substring(0, 6);
+                var currcardno = cc.substring(0, 5);
+                var cc_bin_length = cc.length;
+                
+                if(cc_bin_length == 6 || (callflag==1 && cc_bin_length ==16) || (prevcno == currcardno && cc_bin_length==5) ){  
+                    if(cc_bin_length == 6){
+                        $('#nolen').val(cc);
+                        $('#callflag').val(1);
+                    }   
+                    var data= {cc:cc}
                     $.ajax({
                         dataType: 'json',
                         url: url_cc,
                         data: data,
                         type: 'post',
                         success: function(result)
-                        {                                    
-                            if(result != null){
+                        {   
+                            var html = '' ;
+                            var wrapper = $(".installment_row"); //Fields wrapper
+                            if(result == null){
+                                grandtotal = priceUtils.formatPrice(grandtotal, quote.getPriceFormat());
+                                 //some this wrong with api
+                                $('#bankImage').attr('src',''); 
+                                html += '<div class="install_body_label installment_radio"><input rel="1" class="installment_radio" id="installment_radio" checked="" name="installments" value="1" type="radio"></div>';
+                                html += '<div class="install_body_label installment_lable_code">                      <span data-bind="text: installment">One Shot</span></div>';
+                                html +='<div class="install_body_label">';
+                                html +='<span data-bind="text: amount">'+grandtotal+'</span>';
+                                html +='</div>';
+                                html +='<div class="install_body_label final_commi_price">';
+                                html +='<span data-bind="text: total">'+grandtotal+'</span>';
+                                html +='</div></div>';   
+                                $(wrapper).html(html);
+                            }else{
                                 bank_id = result.bank;
                                 gateway = result.gateway;                                        
-                            }
-                            if(grandtotal >= min_order){
-                                count = 0;
-                                installment_count = 0;
-                                $('#bankImage').attr('src',result.image);
-                                var wrapper = $(".installment_row"); //Fields wrapper
+                            
+                                if(grandtotal >= min_order){
+                                    count = 0;
+                                    installment_count = 0;
+                                    $('#bankImage').attr('src',result.image);                                   
                                     var installments_length = result.installments.length;
-                                    var html = '' ;
+                                   
                                     for (var j = 0; j < installments_length; j++) { //for start
-                                            var commission = parseInt(result.installments[j].commission);                          
-                                            var installment_count = j + 1;
+                                        var commission = parseInt(result.installments[j].commission);                          
+                                        var installment_count = j + 1;
 
-                                            var total = grandtotal + ((grandtotal * commission)/100);
-                                            var per_month = (total/installment_count);
-                                            var currency_total = priceUtils.formatPrice(total, quote.getPriceFormat());
-                                            var currency_per_month = priceUtils.formatPrice(per_month, quote.getPriceFormat());
-                                            if('0' in result && result['0'].base_installments == installment_count){
-                                                    var campaigns_length = result.campaigns.length;
-                                                    for (var i = 0; i < campaigns_length; i++) {
-                                                        campaign_id.push(result.campaigns[i].campaign_id);
-                                                        extra_installments.push(result.campaigns[i].extra_installments);
-                                                    }
-                                                    html +='<div class="install_body_label installment_radio "><input rel=' + installment_count + ' class="installment_radio" id="installment_radio_joker'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>' ;
-                                                    html += '<div class="install_body_label installment_lable_code "><div class="joker">' + installment_count +' + JOKER </div></div>';
-                                            }else{
-                                                html +='<div class="install_body_label installment_radio installment_radio'+ installment_count + '" ><input checked="" rel=' + installment_count + ' class="installment_radio" id="installment_radio'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>'; 
-                                                if(installment_count == 1){
-                                                    html += '<div class="install_body_label installment_lable_code">One Shot</div>'; 
-                                                }else{
-                                                    html += '<div class="install_body_label installment_lable_code">' + installment_count + '  </div>'; 
-                                                }    
+                                        var total = grandtotal + ((grandtotal * commission)/100);
+                                        var per_month = (total/installment_count);
+                                        per_month_value.push(per_month);
+                                        total_value.push(total);
+                                        var currency_total = priceUtils.formatPrice(total, quote.getPriceFormat());
+                                        var currency_per_month = priceUtils.formatPrice(per_month, quote.getPriceFormat());
+                                        if('0' in result && result['0'].base_installments == installment_count){
+                                            var campaigns_length = result.campaigns.length;
+                                            for (var i = 0; i < campaigns_length; i++) {
+                                                campaign_id.push(result.campaigns[i].campaign_id);
+                                                extra_installments.push(result.campaigns[i].extra_installments);
                                             }
-                                            html += '<div class="install_body_label">' + currency_per_month +'</div>';
-                                            html += '<div class="install_body_label final_commi_price">' + currency_total + '</div>';
+                                            html +='<div class="install_body_label installment_radio "><input rel=' + installment_count + ' class="installment_radio" id="installment_radio_joker'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>' ;
+                                            html += '<div class="install_body_label installment_lable_code "><div class="joker">' + installment_count +' + JOKER </div></div>';
+                                        }else{
+                                            if(installment_count == 1){
+                                                html +='<div class="install_body_label installment_radio installment_radio'+ installment_count + '" ><input checked="" rel=' + installment_count + ' class="installment_radio" id="installment_radio'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>'; 
+                                                html += '<div class="install_body_label installment_lable_code">One Shot</div>'; 
+                                            }else{
+                                                html +='<div class="install_body_label installment_radio installment_radio'+ installment_count + '" ><input rel=' + installment_count + ' class="installment_radio" id="installment_radio'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>'; 
+                                                html += '<div class="install_body_label installment_lable_code">' + installment_count + '  </div>'; 
+                                            }    
+                                        }
+                                        html += '<div class="install_body_label"><span id="per_month' + installment_count + '" rel="'+per_month+'">' + currency_per_month + '</span></div>';
+                                        html += '<div class="install_body_label final_commi_price"><span id="total' + installment_count + '" rel="'+total+'">'+currency_total + '</span></div>';
+                                        
                                     } // for end 
                                     $(wrapper).html(html);
+                                    
                                     for (var j = 0; j < installments_length; j++) { //for start
                                             var installment_count = j + 1;
-                                            $("#installment_radio_joker"+ installment_count).click(function(){    
-                                                month_inst = per_month;
-                                                total_inst = total;
-                                                var options = ''; 
+                                            var commission = parseInt(result.installments[j].commission);                                                                          
+                                            $("#installment_radio_joker"+ installment_count).click(function(){
+                                               
+                                                var options = '';
+                                                var total_installments;
+                                               
+                                                installment_count = parseInt(installment_count);
+                                               
+                                               installment = $(this).val();  
+                                               baseinstallment = parseInt(installment);
                                                 for (var i = 0; i < campaigns_length; i++) {
-                                                    options += '<option value="' + campaign_id[i] +'">+ ' + extra_installments[i] +'</option>';
+                                                    total_installments = parseInt(extra_installments[i]);
+                                                    total_installments += parseInt(installment);
+                                                    options += '<option value="' + total_installments +'">+ ' + extra_installments[i] +'</option>';
                                                 }
                                                 $('.extra_installment').html('<label>Extra Installments</label><div class="extra_installments_select"><select id ="campaign_id" name="campaign_id" class="form-control"><option value="">- Select -</option>'+options+'</select></div>');
-                                                installment = installment_count;
+                                                                                                
                                             });
-                                            $("#installment_radio"+ installment_count).click(function(){    
-                                                month_inst = per_month;
-                                                total_inst = total;
-                                                $('.extra_installment').html('');                                                        
-                                                installment = installment_count;
+                                            $("#installment_radio"+ installment_count).click(function(){  
+                                             
+                                                $('.extra_installment').html('');     
+                                                installment = $(this).val(); 
+                                                baseinstallment = parseInt(installment);
                                             });
                                     }//end for
-                                    $("#campaign_id").click(function(){
-                                        var extra = $( "#campaign_id option:selected" ).text();
+                                    $('body').on('change','#campaign_id',function(){                                    
+                                        var extra = $(this).val();                                     
+                                        
                                         extra = parseInt(extra);
-                                        if(extra != NaN){
-                                            installment += extra;                                                   
-                                        }
+                                        baseinstallment =  parseInt(installment);
+                                        installment = extra; 
+                                         
+                                                                                        
                                     });
-
                                 }
-
-                            },
+                            }                            
+                            //$(wrapper).html(html);                            
+                        },
                             error: function(){
-                                alert("You Failed!");
+                                //alert("You Failed!");
                             }
                         });/*end ajax*/
 
@@ -255,16 +297,18 @@ define(
                        var use3D = 0; 
                     }
                     var useBKM = $('#useBKM').val();
-                    var cc_name = $('#input-cc-name').val();
-                    var cc_number = $('#input-cc-number').val();
-                    var cc_month = $('#input-cc-month').val();
-                    var cc_year = $('#input-cc-year').val();
-                    var cc_cvc = $('#input-cc-cvc').val();
-                    var cc_length = cc_number.length;
                     if(useBKM == '0'){
-                            var data= {installments:installment, total:total_inst, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
+                            var cc_name = $('#input-cc-name').val();
+                            var cc_number = $('#input-cc-number').val();
+                            var cc_month = $('#input-cc-month').val();
+                            var cc_year = $('#input-cc-year').val();
+                            var cc_cvc = $('#input-cc-cvc').val();
+                            var cc_length = cc_number.length;                    
+                            var permonth =$('#per_month'+baseinstallment).attr('rel');
+                            var totalInstallamt =$('#total'+baseinstallment).attr('rel');
+                            var data= {installments:installment, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
                             customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
-                            if(cc_length == 16){
+                            if(cc_length == 16){                                
                                 $.ajax({
                                     dataType: 'json',
                                     url: url_submit,
@@ -272,28 +316,42 @@ define(
                                     type: 'post',
                                     success: function(result)
                                     {                                        
-                                        if(result.ErrorCode !=0){
-                                            var wrapper = $(".error-message");
-                                            // alert(result.ErrorMSG);
-                                            $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
+                                        if(result != null){
+                                            if(result.ErrorCode !=0){
+                                                var wrapper = $(".error-message");
+                                                // alert(result.ErrorMSG);
+                                                $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
+                                            }else{
+                                                var wrapper = $(".error-message-bkm");                                    
+                                                $(wrapper).html('');
+                                            }
+                                        }else{
+                                             window.location.assign(url_redirect);
                                         }
                                     },
                                     error: function(){                                       
                                     }
                                 });
                             }
-                    }else{
-                        var data= {total:grandtotal,customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone}
+                    }else{                        
+                        var data= {installments:installment, total:grandtotal,customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone}
                         $.ajax({
                             dataType: 'json',
                             url: url_bkm,
                             data: data,
                             type: 'post',
                             success: function(result)
-                            {                                
-                                if(result.ErrorCode !=0){
-                                    var wrapper = $(".error-message-bkm");                                    
-                                    $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
+                            {
+                                if(result != null){
+                                    if(result.ErrorCode !=0){
+                                        var wrapper = $(".error-message-bkm");                                    
+                                        $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
+                                    }else{
+                                        var wrapper = $(".error-message-bkm");                                    
+                                        $(wrapper).html('');
+                                    }
+                                }else{
+                                    window.location.assign(url_redirect);
                                 }
                             },
                             error: function(){
@@ -301,7 +359,7 @@ define(
                             }
                         });                        
                     }                    
-                    this.placeOrder();
+                   this.placeOrder();
                 }
             }
 

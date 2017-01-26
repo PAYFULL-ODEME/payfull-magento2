@@ -34,7 +34,9 @@ class ReturnBKM extends Action
      */
     public function execute()
     {
-            // echo "ddd";
+        // print_r($_)
+        print_r($_REQUEST);exit;
+        echo "BKM Payment Successful";  
     }
    
 }

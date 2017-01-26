@@ -70,52 +70,26 @@ class Index extends Action
      */
     public function execute()
     {
-		$cc_no='';		
-		if(!isset($_POST['cc'])){			
-			return false;			
-		}
-		if(isset($_POST['cc'])){
-			$cc_no = $_POST['cc'];
-		}
-		if(strlen($cc_no<6)){
-			return false;
-		}
-		$response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
+        $cc_no='';		
+        if(!isset($_POST['cc'])){			
+                return false;			
+        }
+        if(isset($_POST['cc'])){
+                $cc_no = $_POST['cc'];
+        }
+        if(strlen($cc_no<6)){
+               // return false;
+        }
+        $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
         $issuer = $this->resultFactory->create(ResultFactory::TYPE_JSON);
         $installment = $this->resultFactory->create(ResultFactory::TYPE_JSON);
-        // $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        // $cart = $objectManager->get('\Magento\Checkout\Model\Cart'); 
- 
-        // $subTotal = $cart->getQuote()->getSubtotal();
-        // $grandTotal = $cart->getQuote()->getGrandTotal();
         
-        // $order_total = [
-        //     'min' => $this->helper->getMinOrderTotal(),
-        //     'max' => $this->helper->getMaxOrderTotal()
-        // ];
-	
-		if($cc_no){
-			$this->result = $this->helper->send($cc_no, 'Issuer');
-		}
-		$resultj = $this->resultJsonFactory->create();
-		return $resultj->setData($this->result); 
+        if($cc_no){
+               $this->result = $this->helper->send($cc_no, 'Issuer');              
+        }
+        $resultj = $this->resultJsonFactory->create();
+        return $resultj->setData($this->result); 
                
     }
-
-    private function getCreditCardDetails()
-	{
-		$attributes = [
-			'token' => 'rh3gd4',
-			'bin' => '5421',
-			'cardType' => 'American Express',
-			'expirationMonth' => 12,
-			'expirationYear' => 2021,
-			'last4' => 1231
-		];
-
-		$creditCardDetails = new CreditCardDetails($attributes);
-
-		return $creditCardDetails;
-	}
     
 }
