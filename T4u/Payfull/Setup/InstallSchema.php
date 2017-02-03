@@ -137,8 +137,8 @@ class InstallSchema implements InstallSchemaInterface
                 )
                 ->addColumn(
                     'use3d',
-                    Table::TYPE_BOOLEAN,
-                    null,
+                    Table::TYPE_TEXT,
+                    10,
                     [],
                     '3D Secure'
                 )
@@ -165,22 +165,22 @@ class InstallSchema implements InstallSchemaInterface
                 )
                 ->addColumn(
                     'status',
-                    Table::TYPE_BOOLEAN,
-                    null,
+                    Table::TYPE_TEXT,
+                    50,
                     ['nullable' => false],
                     'Status'
                 )
                 ->addColumn(
                     'date_added',
-                    Table::TYPE_DATETIME,
-                    null,
+                    Table::TYPE_TEXT,
+                    50,
                     [],
                     'Date Added'
                 )
                 ->addColumn(
                     'created_at',
-                    Table::TYPE_DATETIME,
-                    null,
+                    Table::TYPE_TIMESTAMP,
+                    Table::TIMESTAMP_INIT,
                     [],
                     'Created At'
                 )

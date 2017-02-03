@@ -98,12 +98,10 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         }
         
     }
-    public function cancelOrder($defaults)
+    public function orderCancelRefund($defaults)
     {
         $getClientIp = $this->getClientIp();
         $language = $this->getLanguage();
-        // echo $getClientIp."ssss".$language;
-        // var_dump($defaults);exit;
         $apiUname = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_username');
         if (!$apiUname) {
             throw new LocalizedException(__('No Api username set. transaction will not proceed.'));
@@ -127,7 +125,6 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
             "client_ip"       => $getClientIp
          );
         $params = array_merge($params, $defaults);
-        // var_dump($params);exit;
         $response = $this->helper->bindCurl($params, $password, $api_url);
 
         return $response; 
@@ -157,7 +154,6 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $cart = $objectManager->get('\Magento\Checkout\Model\Cart'); 
 
-        // $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $currency = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
         $this->currencyCode = $currency->getStore()->getCurrentCurrencyCode();
 
@@ -176,11 +172,10 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
                 $responseList = $this->bindCurl($params, $password, $api_url);                 
                 $response = json_decode($response);
                 $responseList = json_decode($responseList);
-               
+                if(isset($responseList)){
                 foreach ($responseList->data as $index) {               
                     if($index->bank == $response->data->bank_id){
                         $this->installment = count($index->installments)-1;
-                        // echo $this->installment;exit;
                         $this->bankId = $response->data->bank_id;
                         $this->gateway = $index->gateway;
                         $this->resultresponse = $response ;             
@@ -189,7 +184,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
                             $params = $this->_createParmList($apiUname,$cc_no_first_six,'ExtraInstallments');
                             $extraInstallment = $this->bindCurl($params, $password, $api_url);
                             $extraInstallment = json_decode($extraInstallment);
-                            $this->exchangeRate = $extraInstallment->data->exchange_rate;
+                            // $this->exchangeRate = $extraInstallment->data->exchange_rate;
                             
                             $params = $this->_createParmList($apiUname,$cc_no_first_six,'ExtraInstallmentsList');
                             $extraInstallmentList = $this->bindCurl($params, $password, $api_url);
@@ -198,21 +193,14 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
                             if(isset($extraInstallment->data->campaigns)){
                                 $this->resultresponse = (object)array_merge((array)$this->resultresponse, (array)$extraInstallmentList->data->campaigns);
                             }
-                            // foreach ($extraInstallment->data->campaigns as $data->$value) {
-                            //     foreach ($extraInstallmentList->data->campaigns as $campaigns) {
-                            //         // foreach ($data->campaigns as $value) {
-                            //             if($data->campaign_id == $campaigns->campaign_id){
-                            //                 $this->resultresponse = (object)array_merge((array)$this->resultresponse, (array)$campaigns);
-                            //             }
-                            //     }
-                            // }
                         }
                     }
                 }
             }
+            }
         }else{          
             $this->resultresponse = $response;
-        }               
+        }  
         return $this->resultresponse;
     }
     /**
@@ -234,11 +222,9 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         if($get_param == 'Issuer'){
             $cc_no_first_six = substr($cc_no_first_six, 0, 6);
             $extra_params = array("bin" => $cc_no_first_six);
-            // $params = array_merge($params, $extra_params);
         }
         if($get_param == 'Installments'){
             $extra_params = array("one_shot_commission" => '0');             
-            // $params = array_merge($params, $extra_params);           
         }
         if($get_param == 'ExtraInstallments'){
             $extra_params = array(
@@ -246,17 +232,21 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
                 "currency"        => $this->currencyCode,
                 "bank_id"         => $this->bankId,
                 "gateway"         => $this->gateway,
-                "installments"    => $this->installment);             
+                "installments"    => '2'/*$this->installment*/);             
             $params = array_merge($params, $extra_params);
-            // var_dump($params);exit;           
         }
-        if($get_param == 'ExtraInstallmentsList'){
-            $extra_params = array(
-                "exchange_rate"   => $this->exchangeRate,
-                "currency"        => $this->currencyCode);
+        if($get_param == 'ExtraInstallmentsList') {
+            if($this->currencyCode != 'TRY'){
+                $extra_params = array(
+                    "exchange_rate"   => '1'/*$this->exchangeRate*/,
+                    "currency"        => $this->currencyCode);
+            }else{
+                $extra_params = array(
+                    "currency"        => $this->currencyCode);
+            }
         }
         $params = array_merge($params, $extra_params);           
-   
+        // var_dump($params);exit;
         return $params;     
     }
     public function sendSale($defaults, $saleType)
@@ -289,27 +279,16 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         $cart = $objectManager->get('\Magento\Checkout\Model\Cart'); 
         $this->grandTotal = $cart->getQuote()->getGrandTotal();
 
-        // $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $currency = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
         $this->currencyCode = $currency->getStore()->getCurrentCurrencyCode();
-
-        // echo $baseUrl;exit;
-
-
 
         $params = $this->_createParmListSale($apiUname, $defaults, $saleType);
         
         // send curl call 
-        $response = $this->bindCurl($params, $password, $api_url);        
-        // get cart order grandtotal     
-        // $params = $this->_createParmListSale($apiUname, $defaults, 'SaleInstallment');
-
-        // $responseInstallment = $this->bindCurl($params, $password, $api_url);
+        $response = $this->bindCurl($params, $password, $api_url); 
         $response = json_decode($response);
-        // $responseInstallment = json_decode($responseInstallment);
     
         $this->resultresponse = $response;       
-        // $this->resultresponse = $responseInstallment;       
         return $this->resultresponse;
     }
     /**
@@ -318,37 +297,34 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
      * @return array
      */ 
     public function _createParmListSale($apiUname, $defaults, $saleType){
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $currency = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
+        $this->currencyCode = $currency->getStore()->getCurrentCurrencyCode();
         
         $getClientIp = $this->getClientIp();
         $language = $this->getLanguage();
-        // $use3d = $this->get3DSecure();      
         $params = array(
             "merchant"        => $apiUname,
             "type"            => 'Sale',
-            // "total"           => $this->grandTotal,
-            "currency"        => 'TRY',
-            // "installments"    => 1,
-            "language"        => $language,//[mandatory]  tr/en
-            "client_ip"       => $getClientIp,//[mandatory]
-            "payment_title"   => 'test payment title',//[mandatory]
+            "currency"        => $this->currencyCode,
+            "language"        => $language,
+            "client_ip"       => $getClientIp,
+            "payment_title"   => 'test payment title',
             "customer_firstname" => 'Mohammad',
-            "customer_lastname"  => 'Alabed',//[mandatory]
-			"customer_email"     => 'mohmmadalabed@gmail.com',//[mandatory]
-			"customer_phone"     => '265656565',//[mandatory]
-            "customer_tc"        => '12590326514',//[optional]
+            "customer_lastname"  => 'Alabed',
+			"customer_email"     => 'mohmmadalabed@gmail.com',
+			"customer_phone"     => '265656565',
+            "customer_tc"        => '12590326514',
 
-            "passive_data"  => '####aaaa',//[optional]            
+            "passive_data"  => '####aaaa',            
          );
         if(isset($defaults['use3d']) && $defaults['use3d'] == 1){
             $extraParam = array(
-                "return_url"      => $this->baseUrl.'/payfull/payment/Return3D' 
+                "return_url"      => $this->baseUrl.'payfull/payment/Return3D' 
             );
             $params = array_merge($params, $extraParam);
         }     
         $params = array_merge($defaults, $params);
-        // echo "<pre>";
-        // print_r($params);
-        // exit; 
         return $params;     
     }
 

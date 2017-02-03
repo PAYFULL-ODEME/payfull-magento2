@@ -12,14 +12,7 @@
                 <item name="payfull_config_provider" xsi:type="object">T4u\Payfull\Model\PayfullConfigProvider</item>
             </argument>
         </arguments>
-    </type>
-    <!-- <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
-                <item name="payfull_config_provider" xsi:type="object">T4u\Payfull\Model\Ui\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type> -->
+    </type>   
     <type name="T4u\Payfull\Block\Info">
         <arguments>
             <argument name="data" xsi:type="array">

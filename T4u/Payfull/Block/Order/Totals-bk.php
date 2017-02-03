@@ -7,7 +7,9 @@ namespace T4u\Payfull\Block\Order;
 
 use Magento\Sales\Model\Order;
 
-class Totals extends \Magento\Framework\View\Element\Template
+use Magento\Framework\View\Element\Template;
+
+class Totals extends \Magento\Sales\Model\Order
 {
     /**
      * Associated array of totals
@@ -108,10 +110,6 @@ class Totals extends \Magento\Framework\View\Element\Template
     protected function _initTotals()
     {
         $source = $this->getSource();
-        /*
-        * set Payfull Commission added to GrandTotal
-        */       
-        $grand_total_with_commission = $this->getSource()->getPayfullCommission() + $this->getSource()->getGrandTotal();
 
         $this->_totals = [];
         $this->_totals['subtotal'] = new \Magento\Framework\DataObject(
@@ -131,19 +129,16 @@ class Totals extends \Magento\Framework\View\Element\Template
                 ]
             );
         }
-        /**
-         * Add Payfull Commission
-         */
-        if($this->getSource()->getPayfullCommission()){
-            $this->_totals['payfull_commission'] = new \Magento\Framework\DataObject(
-                [
-                    'code' => 'payfull_commission',
-                    'value' => $this->getSource()->getPayfullCommission(),
-                    'base_value' => $this->getSource()->getPayfullCommission(),
-                    'label' => __('Commission'),
-                ]
-            );
-        }
+        
+        $this->_totals['payfull_commission'] = new \Magento\Framework\DataObject(
+            [
+                'code' => 'payfull_commission',
+                'value' => $this->getSource()->getPayfullCommission(),
+                'base_value' => $this->getSource()->getPayfullCommission(),
+                'label' => __('Payfull Commission'),
+            ]
+        );
+
         /**
          * Add discount
          */
@@ -168,7 +163,7 @@ class Totals extends \Magento\Framework\View\Element\Template
                 'code' => 'grand_total',
                 'field' => 'grand_total',
                 'strong' => true,
-                'value' => $grand_total_with_commission,
+                'value' => $source->getGrandTotal(),
                 'label' => __('Grand Total'),
             ]
         );

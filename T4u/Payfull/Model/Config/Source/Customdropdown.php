@@ -11,7 +11,7 @@ class Customdropdown implements \Magento\Framework\Option\ArrayInterface
     {
  
         return [
-            ['value' => __('tr'), 'label' => __('Turkey')],
+            ['value' => __('tr'), 'label' => __('Turkish')],
             ['value' => __('en'), 'label' => __('English')]
         ];
     }

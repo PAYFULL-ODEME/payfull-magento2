@@ -29,7 +29,8 @@ class PayfullConfigProvider implements \Magento\Checkout\Model\ConfigProviderInt
     	 'threed_secure' => $this->get3DSecure(),
     	 'bkm_express' => $this->getBKM(),
          'minimum_order' => $this->getMinOrderTotal(),
-         'maximum_order' => $this->getMaxOrderTotal()
+         'maximum_order' => $this->getMaxOrderTotal(),
+         'installment' => $this->getInstallment()
     	 ]]];
         return $config;
     	// echo "sssssssssss";exit;
@@ -61,4 +62,8 @@ class PayfullConfigProvider implements \Magento\Checkout\Model\ConfigProviderInt
 	{
 	    return $this->helper->getBKM();
 	}
+    public function getInstallment()
+    {
+        return $this->helper->getInstallment();
+    }
 }

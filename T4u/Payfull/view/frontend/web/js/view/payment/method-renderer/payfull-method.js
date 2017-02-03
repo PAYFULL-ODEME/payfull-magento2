@@ -19,13 +19,10 @@ define(
     function ($, ko, quote, priceUtils, url, Component) {
         'use strict';
         
-        // var bankImage = '';
         var billingAddress = quote.billingAddress();
         var totals = quote.totals();
         var grandtotal_first = 0;
         var grandtotal = 0;
-        /*var month_inst = 0;
-        var total_inst = 0;*/
         var count = 0;
         var use3D = 0;
         var result_cc_month = 0;
@@ -45,6 +42,9 @@ define(
         var extra_installments = new Array();
         var installment = 1;
         var baseinstallment=1;
+        var flag = 0;
+        var cc_bin_length = '';
+        var cc_bin = '';
         if (totals) {
             grandtotal = totals.grand_total;
             var month_inst = totals.grand_total;
@@ -120,26 +120,32 @@ define(
                 var $form = $('#' + this.getCode() + '-form');
                 return $form.validation() && $form.validation('isValid');
             },
-            /*getInstallment: function(){
-               
-            },*/
-            
-            ajaxCall: function(){                        
-                var min_order = this.getMinOrderTotal();
+            isInstallmentActive: function(){
+                 return window.checkoutConfig.payment.payfull.installment;  
+            },
+
+            beforeAjaxCall: function(){
                 var cc = $('#input-cc-number').val();
-                var prevcno = $('#nolen').val();
-                var callflag = $('#callflag').val();
-                prevcno = prevcno.substring(0, 5);
-                var cc_bin = cc.substring(0, 6);
-                var currcardno = cc.substring(0, 5);
-                var cc_bin_length = cc.length;
-                
-                if(cc_bin_length == 6 || (callflag==1 && cc_bin_length ==16) || (prevcno == currcardno && cc_bin_length==5) ){  
-                    if(cc_bin_length == 6){
-                        $('#nolen').val(cc);
-                        $('#callflag').val(1);
-                    }   
-                    var data= {cc:cc}
+                cc_bin = cc.substring(0, 6);
+                console.log(cc_bin+"aaaa"+flag);
+                if (flag == 0 && cc_bin.length == 6) {
+                    cc_bin_length = cc_bin.length;
+                    flag = 1;
+                    console.log(cc_bin+"first"+"aaaa"+flag);
+                    this.ajaxCall();
+                } else if (flag == 1 && cc_bin.length < 6) {
+                    cc_bin_length = cc_bin.length;
+                    flag = 0;
+                    console.log(cc_bin+"second"+"aaaa"+flag);
+                    this.ajaxCall();
+                }
+            },
+            
+            ajaxCall: function(){                  
+                console.log(cc_bin+"yyyyyy");
+                var min_order = this.getMinOrderTotal();
+                if(cc_bin_length <= 6) {
+                    var data= {cc:cc_bin}
                     $.ajax({
                         dataType: 'json',
                         url: url_cc,
@@ -148,18 +154,18 @@ define(
                         success: function(result)
                         {   
                             var html = '' ;
-                            var wrapper = $(".installment_row"); //Fields wrapper
+                            var wrapper = $(".installment_row"); /*Fields wrapper*/
                             if(result == null){
-                                grandtotal = priceUtils.formatPrice(grandtotal, quote.getPriceFormat());
-                                 //some this wrong with api
+                                var grandtotal_null = priceUtils.formatPrice(grandtotal, quote.getPriceFormat());
+                                /*some this wrong with api*/
                                 $('#bankImage').attr('src',''); 
                                 html += '<div class="install_body_label installment_radio"><input rel="1" class="installment_radio" id="installment_radio" checked="" name="installments" value="1" type="radio"></div>';
-                                html += '<div class="install_body_label installment_lable_code">                      <span data-bind="text: installment">One Shot</span></div>';
+                                html += '<div class="install_body_label installment_lable_code"><span data-bind="text: installment">One Shot</span></div>';
                                 html +='<div class="install_body_label">';
-                                html +='<span data-bind="text: amount">'+grandtotal+'</span>';
+                                html +='<span data-bind="text: amount">'+grandtotal_null+'</span>';
                                 html +='</div>';
                                 html +='<div class="install_body_label final_commi_price">';
-                                html +='<span data-bind="text: total">'+grandtotal+'</span>';
+                                html +='<span data-bind="text: total">'+grandtotal_null+'</span>';
                                 html +='</div></div>';   
                                 $(wrapper).html(html);
                             }else{
@@ -169,43 +175,44 @@ define(
                                 if(grandtotal >= min_order){
                                     count = 0;
                                     installment_count = 0;
-                                    $('#bankImage').attr('src',result.image);                                   
-                                    var installments_length = result.installments.length;
-                                   
-                                    for (var j = 0; j < installments_length; j++) { //for start
-                                        var commission = parseInt(result.installments[j].commission);                          
-                                        var installment_count = j + 1;
+                                    $('#bankImage').attr('src',result.image);
+                                    if(result.installments != null ){                                   
+                                        var installments_length = result.installments.length;
+                                       
+                                        for (var j = 0; j < installments_length; j++) { /*for start*/
+                                            var commission = parseInt(result.installments[j].commission);                          
+                                            var installment_count = j + 1;
 
-                                        var total = grandtotal + ((grandtotal * commission)/100);
-                                        var per_month = (total/installment_count);
-                                        per_month_value.push(per_month);
-                                        total_value.push(total);
-                                        var currency_total = priceUtils.formatPrice(total, quote.getPriceFormat());
-                                        var currency_per_month = priceUtils.formatPrice(per_month, quote.getPriceFormat());
-                                        if('0' in result && result['0'].base_installments == installment_count){
-                                            var campaigns_length = result.campaigns.length;
-                                            for (var i = 0; i < campaigns_length; i++) {
-                                                campaign_id.push(result.campaigns[i].campaign_id);
-                                                extra_installments.push(result.campaigns[i].extra_installments);
-                                            }
-                                            html +='<div class="install_body_label installment_radio "><input rel=' + installment_count + ' class="installment_radio" id="installment_radio_joker'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>' ;
-                                            html += '<div class="install_body_label installment_lable_code "><div class="joker">' + installment_count +' + JOKER </div></div>';
-                                        }else{
-                                            if(installment_count == 1){
-                                                html +='<div class="install_body_label installment_radio installment_radio'+ installment_count + '" ><input checked="" rel=' + installment_count + ' class="installment_radio" id="installment_radio'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>'; 
-                                                html += '<div class="install_body_label installment_lable_code">One Shot</div>'; 
+                                            var total = grandtotal + ((grandtotal * commission)/100);
+                                            var per_month = (total/installment_count);
+                                            per_month_value.push(per_month);
+                                            total_value.push(total);
+                                            var currency_total = priceUtils.formatPrice(total, quote.getPriceFormat());
+                                            var currency_per_month = priceUtils.formatPrice(per_month, quote.getPriceFormat());
+                                            if('0' in result && result['0'].base_installments == installment_count){
+                                                var campaigns_length = result.campaigns.length;
+                                                for (var i = 0; i < campaigns_length; i++) {
+                                                    campaign_id.push(result.campaigns[i].campaign_id);
+                                                    extra_installments.push(result.campaigns[i].extra_installments);
+                                                }
+                                                html +='<div class="install_body_label installment_radio "><input rel=' + installment_count + ' class="installment_radio" id="installment_radio_joker'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>' ;
+                                                html += '<div class="install_body_label installment_lable_code "><div class="joker">' + installment_count +' + JOKER </div></div>';
                                             }else{
-                                                html +='<div class="install_body_label installment_radio installment_radio'+ installment_count + '" ><input rel=' + installment_count + ' class="installment_radio" id="installment_radio'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>'; 
-                                                html += '<div class="install_body_label installment_lable_code">' + installment_count + '  </div>'; 
-                                            }    
-                                        }
-                                        html += '<div class="install_body_label"><span id="per_month' + installment_count + '" rel="'+per_month+'">' + currency_per_month + '</span></div>';
-                                        html += '<div class="install_body_label final_commi_price"><span id="total' + installment_count + '" rel="'+total+'">'+currency_total + '</span></div>';
-                                        
-                                    } // for end 
-                                    $(wrapper).html(html);
+                                                if(installment_count == 1){
+                                                    html +='<div class="install_body_label installment_radio installment_radio'+ installment_count + '" ><input checked="" rel=' + installment_count + ' class="installment_radio" id="installment_radio'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>'; 
+                                                    html += '<div class="install_body_label installment_lable_code">One Shot</div>'; 
+                                                }else{
+                                                    html +='<div class="install_body_label installment_radio installment_radio'+ installment_count + '" ><input rel=' + installment_count + ' class="installment_radio" id="installment_radio'+ installment_count + '" name="installments" value=' + installment_count + ' type="radio"></div>'; 
+                                                    html += '<div class="install_body_label installment_lable_code">' + installment_count + '  </div>'; 
+                                                }    
+                                            }
+                                            html += '<div class="install_body_label"><span id="per_month' + installment_count + '" rel="'+per_month+'">' + currency_per_month + '</span></div>';
+                                            html += '<div class="install_body_label final_commi_price"><span id="total' + installment_count + '" rel="'+total+'">'+currency_total + '</span></div>';
+                                            
+                                        }/*end for*/
+                                        $(wrapper).html(html);
                                     
-                                    for (var j = 0; j < installments_length; j++) { //for start
+                                        for (var j = 0; j < installments_length; j++) { /*for start*/
                                             var installment_count = j + 1;
                                             var commission = parseInt(result.installments[j].commission);                                                                          
                                             $("#installment_radio_joker"+ installment_count).click(function(){
@@ -231,24 +238,31 @@ define(
                                                 installment = $(this).val(); 
                                                 baseinstallment = parseInt(installment);
                                             });
-                                    }//end for
-                                    $('body').on('change','#campaign_id',function(){                                    
-                                        var extra = $(this).val();                                     
-                                        
-                                        extra = parseInt(extra);
-                                        baseinstallment =  parseInt(installment);
-                                        installment = extra; 
-                                         
-                                                                                        
-                                    });
-                                }
-                            }                            
-                            //$(wrapper).html(html);                            
-                        },
-                            error: function(){
-                                //alert("You Failed!");
-                            }
-                        });/*end ajax*/
+                                        }/*end for*/
+                                        $('body').on('change','#campaign_id',function(){                                    
+                                            var extra = $(this).val();                                     
+                                            
+                                            extra = parseInt(extra);
+                                            baseinstallment =  parseInt(installment);
+                                            installment = extra; 
+                                             
+                                                                                            
+                                        });
+                                    }/*end if*/
+                                    if(result.has3d != null){
+                                        if(result.has3d == 1) {
+                                            $('.payfull-checkbox').show();                                        
+                                        }else{
+                                            $('.payfull-checkbox').hide(); 
+                                        }                                    
+                                    }/*end if*/
+                                }/*end if*/
+                            }/*end else*/                            
+                        },/*end success*/
+                        error: function(){
+                            /*alert("You Failed!");*/
+                        }
+                    });/*end ajax*/
 
                 } /*end if*/
             }, /*ens ajaxCall*/ 
@@ -315,17 +329,19 @@ define(
                                     data: data,
                                     type: 'post',
                                     success: function(result)
-                                    {                                        
+                                    {   
+                                        // alert(result+"qqqq");                                     
                                         if(result != null){
+                                            // alert("result");
                                             if(result.ErrorCode !=0){
                                                 var wrapper = $(".error-message");
-                                                // alert(result.ErrorMSG);
                                                 $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
                                             }else{
                                                 var wrapper = $(".error-message-bkm");                                    
                                                 $(wrapper).html('');
                                             }
                                         }else{
+                                            // alert(result+"qqqqq");
                                              window.location.assign(url_redirect);
                                         }
                                     },
@@ -333,8 +349,9 @@ define(
                                     }
                                 });
                             }
-                    }else{                        
-                        var data= {installments:installment, total:grandtotal,customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone}
+                    }else{
+                        var isInstallment = this.isInstallmentActive(); 
+                        var data= {installments:isInstallment, total:grandtotal,customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone}
                         $.ajax({
                             dataType: 'json',
                             url: url_bkm,

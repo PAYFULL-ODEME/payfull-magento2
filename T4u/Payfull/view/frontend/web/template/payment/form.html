@@ -50,7 +50,7 @@
         <div class="payfull-input">
           <input name="cc_number" value="" placeholder="Credit Card Number" id="input-cc-number" class="input-cc-number-not-supported form-control" maxlength="16" type="text" data-validate="{'required-entry':true,
           'validate-cc-number':true, 'validate-number':true}" oninput="setInputImage(event, this.value);",
-          data-bind="event: {keyup: ajaxCall}">
+          data-bind="event: {input: ajaxCall}">
           <input type="hidden" name="nolen" id="nolen" value=""/>
           <input type="hidden" name="callflag" id="callflag" value="1"/>
         </div>

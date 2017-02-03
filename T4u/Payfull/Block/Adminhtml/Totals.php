@@ -54,6 +54,12 @@ class Totals extends \Magento\Sales\Block\Order\Totals
     protected function _initTotals()
     {
         $this->_totals = [];
+        /*
+        * set Payfull Commission added to GrandTotal
+        */
+        
+        $grand_total_with_commission = $this->getSource()->getPayfullCommission() + $this->getSource()->getGrandTotal();
+
         $this->_totals['subtotal'] = new \Magento\Framework\DataObject(
             [
                 'code' => 'subtotal',
@@ -63,12 +69,16 @@ class Totals extends \Magento\Sales\Block\Order\Totals
             ]
         );
 
+        /**
+         * Add Payfull Commission
+         */
+        
         $this->_totals['payfull_commission'] = new \Magento\Framework\DataObject(
             [
                 'code' => 'payfull_commission',
                 'value' => $this->getSource()->getPayfullCommission(),
                 'base_value' => $this->getSource()->getPayfullCommission(),
-                'label' => __('Payfull Commission'),
+                'label' => __('Commission'),
             ]
         );
 
@@ -111,7 +121,7 @@ class Totals extends \Magento\Sales\Block\Order\Totals
             [
                 'code' => 'grand_total',
                 'strong' => true,
-                'value' => $this->getSource()->getGrandTotal(),
+                'value' => $grand_total_with_commission,
                 'base_value' => $this->getSource()->getBaseGrandTotal(),
                 'label' => __('Grand Total'),
                 'area' => 'footer',

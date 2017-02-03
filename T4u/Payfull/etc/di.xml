@@ -8,7 +8,9 @@
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <!-- Override Totals -->
-    <preference for="Magento\Sales\Block\Order\Totals" type="T4u\Payfull\Block\Adminhtml\Totals" />
+    <preference for="Magento\Sales\Block\Adminhtml\Totals" type="T4u\Payfull\Block\Adminhtml\Totals" />
+    <preference for="Magento\Sales\Block\Order\Totals" type="T4u\Payfull\Block\Order\Totals" /> 
+           
     <!-- Payment Method Facade configuration -->
     <virtualType name="PayfullFacade" type="Magento\Payment\Model\Method\Adapter">
         <arguments>

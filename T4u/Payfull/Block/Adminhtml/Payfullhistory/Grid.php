@@ -129,20 +129,20 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         );
 		
 		$this->addColumn(
-            'bank_name',
+            'bank_id',
             [
                 'header' => __('Bank'),
-                'index' => 'bank_name',
+                'index' => 'bank_id',
                 'class' => 'xxx',
                 'name'=>'bank_name'
             ]
         );
 		
 		$this->addColumn(
-            'threed_secure',
+            'use3d',
             [
-                'header' => __('3d secure'),
-                'index' => 'threed_secure',
+                'header' => __('3D Secure'),
+                'index' => 'use3d',
                 'class' => 'xxx',
                 'name'=>'threed_secure'
             ]
@@ -195,27 +195,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         return parent::_prepareColumns();
     }
 
-    /**
-     * @return $this
-     */
-    protected function _prepareMassaction()
-    {
-        
-        $this->setMassactionIdField('id');
-        $this->getMassactionBlock()->setTemplate('T4u_Payfull::payfullhistory/grid/massaction_extended.phtml');
-        $this->getMassactionBlock()->setFormFieldName('id');
-
-        $this->getMassactionBlock()->addItem(
-            'delete',
-            [
-                'label' => __('Delete'),
-                'url' => $this->getUrl('payfull/*/massDelete'),
-                'confirm' => __('Are you sure?')
-            ]
-        );
-		return $this;
-    }
-
+    
     /**
      * @return string
      */

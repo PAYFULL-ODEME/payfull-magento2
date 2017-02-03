@@ -20,6 +20,8 @@ class Cardinfo extends Action
 {
     private $_historyFactory;
 
+    protected $_orderFactory;
+
     private $result;
 
     private $helper;
@@ -29,6 +31,7 @@ class Cardinfo extends Action
     public function __construct(
         Context $context,
         JsonFactory    $resultJsonFactory,
+        \Magento\Sales\Model\OrderFactory $orderFactory,
         Payfullapi $helper,
         HistoryFactory $historyFactory,
         \Magento\Checkout\Model\Session $checkoutSession
@@ -36,6 +39,7 @@ class Cardinfo extends Action
         parent::__construct($context);
         $this->helper = $helper;
         $this->resultJsonFactory = $resultJsonFactory;
+        $this->_orderFactory = $orderFactory;
         $this->_historyFactory = $historyFactory;
         $this->checkoutSession = $checkoutSession;
     }
@@ -44,7 +48,6 @@ class Cardinfo extends Action
      */
     public function execute()
     {
-         // header('Location: http://35.163.157.163/payfull/payment/RedirectAction');
         if(isset($_POST)){           
             $defaults = $_POST;           
         }
@@ -61,29 +64,20 @@ class Cardinfo extends Action
         if(strlen($cc_number<16)){
             return false;
         }
-        $resultRedirect  = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         if($installment > 1){
             $this->result = $this->helper->sendSale($defaults, 'SaleInstallment');
         }else{            
             $this->result = $this->helper->sendSale($defaults, 'Sale');
         }
-        // response in html when we use 3D_Secure
-        // echo $this->result;exit;
-        if(is_string($this->result) && strpos($this->result, '<html')) {
-            $this->checkoutSession->setPayfull([
-                'secure'=>true,
-                'html'=>$this->result
-            ]);
-            /*$resultRedirect->setPath('payfull/payment/RedirectAction');
-            return $resultRedirect;*/   
-        }
         
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
 
         $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
 
         $grandTotal = $cart->getQuote()->getGrandTotal();
+
+        /*$this->checkoutSession->setPayfull(['grandTotal'=>$grandTotal]);*/
+
         $getClientIp = $this->helper->getClientIp();
 
 
@@ -94,45 +88,92 @@ class Cardinfo extends Action
         $collection = $historyModel->getCollection();        
         $field = array();
         $logdata = array();
-        
+
         foreach ($collection->getData() as $data ) 
         {            
             $field = array_keys($data);
-            $logdata = $data;
+            
             break;
         }
         //  add in if last -> && $this->result->status === true
         /*if(is_object($this->result))*/
-        if(isset($this->result) && is_object($this->result)) {
+        // response in html when we use 3D_Secure
+        // var_dump($this->result);exit;
+        if (is_string($this->result) && strpos($this->result, '<html')) {
+            $this->checkoutSession->setPayfull([
+                'secure'=>true,
+                'html'=>$this->result
+            ]);
+        } else if (isset($this->result) && is_object($this->result)) {
+            
             foreach ($this->result as $key => $value) {
+               
                 foreach ($field as $keys) 
-                {
-                    if($key == $keys){
-                        if($key == 'total'){
+                {   
+                    if($key == 'total'){
+                        if($this->result->original_currency == $this->result->currency){
+                            $logdata['total']=$value;
+                            $logdata['total_try']=$value;
                             $commission_total = $value - $grandTotal;
-                            /*echo $value."gggg".$grandTotal."hhhh".$commission_total;*/
                             $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
                             $payfull = $this->checkoutSession->getPayfull();
-                            $historyModel->setData('commission_total',$commission_total);
-                            $logdata['commission_total']=$commission_total;
+                            $logdata['commission_total'] = $commission_total;
+                        }else{
+                            $total = $value * $this->result->conversion_rate;
+                            $logdata['total'] = round($total, 2);
+                            $logdata['total_try']=$value;
+                            $commission_total = $logdata['total'] - $grandTotal;
+                            $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
+                            $payfull = $this->checkoutSession->getPayfull();
+                            $logdata['commission_total'] = $commission_total;
                         }
-                        $historyModel->setData($key,$value);
                         break;
-                    }elseif($key == 'time'){
-                        $date = explode(' ', $value);
-                        $historyModel->setData('date_added',$date['0']);                       
-                    }elseif($keys == 'order_id'){
-                       // $historyModel->setData('order_id',$order_id);
-                    }elseif($keys == 'client_ip'){
-                        $historyModel->setData($keys,$getClientIp);
-                        $logdata['client_ip']=$getClientIp;
+                    }elseif($key == 'store_id'){                        
+                        $logdata['store_id']='1';
+                         break;
+                    }elseif($key == 'transaction_id'){                        
+                        $logdata['transaction_id']=$value;
+                         break;
+                    }elseif($key == 'total_try'){                        
+                        $logdata['total_try']=$value;
+                         break;
+                    }elseif($key == 'conversion_rate'){                        
+                        $logdata['conversion_rate']=$value;
+                         break;
+                    }elseif($key == 'bank_id'){                        
+                        $logdata['bank_id']=$value;
+                         break;
+                    }elseif($key == 'use3d'){ 
+                        if($value == 0){
+                            $logdata['use3d']='No';
+                        }else{
+                            $logdata['use3d']='Yes';
+                        }                       
+                        break;
+                    }elseif($key == 'installments'){                        
+                        $logdata['installments']=$value;
+                         break;
+                    }elseif($key == 'extra_installments'){                        
+                        $logdata['extra_installments']=$value;
+                         break;
+                    }elseif($key == 'status'){ 
+                        if($value == 0){
+                            $logdata['status']='Failed';
+                        }else{
+                            $logdata['status']='Complete';
+                        }
+                        break;
+                    }elseif($key == 'time'){                        
+                        $logdata['date_added']=$value;
+                        break;
                     }
                 }
             }
+            $logdata['client_ip']=$getClientIp;
             $this->checkoutSession->setPayfulllog($logdata);
-            //$historyModel->save();
             return $resultj->setData($this->result);
         }
+        
     }
    
 }

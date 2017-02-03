@@ -51,8 +51,6 @@ class SaleBKM extends Action
      */
     public function execute()
     {
-        // echo "ssss";exit;
-        // print_r($_POST);
         $apiUname = $this->_scopeConfig->getValue('payment/payfull/merchant_gateway_username');
         if (!$apiUname) {
             throw new LocalizedException(__('No Api username set. transaction will not proceed.'));
@@ -67,77 +65,100 @@ class SaleBKM extends Action
         if (!$api_url) {
             throw new LocalizedException(__('No URL api set. transaction will not proceed.'));
         }
+
         $apiUname = $this->_crypt->decrypt($apiUname);
         $password = $this->_crypt->decrypt($password);
 
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
 
-        $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
-
-        $grandTotal = $cart->getQuote()->getGrandTotal();
-        $getClientIp = $this->helper->getClientIp();
         $baseUrl = $storeManager->getStore()->getBaseUrl();
         $defaults = array(
             "bank_id"         => 'BKMExpress',
-            "return_url"      => $baseUrl.'/payfull/payment/ReturnBKM' 
+            "return_url"      => $baseUrl.'payfull/payment/ReturnBKM' 
         );
-        $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
+
+        $resultj = $this->resultJsonFactory->create();
 
         $defaults = array_merge($defaults, $_POST);
         $params = $this->helper->_createParmListSale($apiUname, $defaults, '');
 
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+
+        $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
+
+        $grandTotal = $cart->getQuote()->getGrandTotal();
+        $getClientIp = $this->helper->getClientIp();
+        
+        $historyModel = $this->_historyFactory->create();
+
+        $collection = $historyModel->getCollection();        
+        $field = array();
+        $logdata = array();
+
+        foreach ($collection->getData() as $data ) 
+        {            
+            $field = array_keys($data);
+            
+            break;
+        }
         $this->result = $this->helper->bindCurl($params, $password, $api_url);
+
         $this->result = json_decode($this->result);
-        // echo "ddddd";        
-        // var_dump($this->result);exit;
         if(is_string($this->result) && strpos($this->result, '<html')) {
             $this->checkoutSession->setPayfull([
                 'html'=>$this->result
             ]);
-        }
-        $resultj = $this->resultJsonFactory->create();
-        // return $resultj->setData($this->result);
-        /***create and save**/
-        $historyModel = $this->_historyFactory->create();
-
-        $collection = $historyModel->getCollection();
-
-        // $historyModel->setData('store_id','1');
-        // $historyModel->setData('order_id','12');
-        $order_id = 1; //temp
-        $field = array();
-        foreach ($collection->getData() as $data ) 
-        {
-            $field = array_keys($data);
-            break;
-        }
-        // add in if last && $this->result->status === 1
-        if(isset($this->result) && is_object($this->result)) {
+        } else if (isset($this->result) && is_object($this->result)) {
+            
             foreach ($this->result as $key => $value) {
+               
                 foreach ($field as $keys) 
-                {
+                {   
                     if($key == $keys){
-                        if($key == 'total'){
-                            $commission_total = $value - $grandTotal;
-                            $historyModel->setData('commission_total',$commission_total);
+                            if($key == 'total'){
+                                if($this->result->original_currency == $this->result->currency){
+                                    $logdata['total']=$value;
+                                    $logdata['total_try']=$value;
+                                    $commission_total = $value - $grandTotal;
+                                    $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
+                                    $payfull = $this->checkoutSession->getPayfull();
+                                    $logdata['commission_total'] = $commission_total;
+                                }else{
+                                    $total = $value * $this->result->conversion_rate;
+                                    $logdata['total'] = round($total, 2);
+                                    $logdata['total_try']=$value;
+                                    $commission_total = $logdata['total'] - $grandTotal;
+                                    $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
+                                    $payfull = $this->checkoutSession->getPayfull();
+                                    $logdata['commission_total'] = $commission_total;
+                                }
+                                break;
+                            }elseif($key == 'status'){ 
+                                if($value == 0){
+                                    $logdata['status']='Failed';
+                                }else{
+                                    $logdata['status']='Complete';
+                                }
+                                break;
+                            }elseif($key == 'use3d'){ 
+                                if($value == 0){
+                                    $logdata['use3d']='No';
+                                }else{
+                                    $logdata['use3d']='Yes';
+                                }                       
+                                break;
+                            }
+                            $logdata[$key]=$value;
+                            break;
+                        }elseif($key == 'time'){
+                            $logdata['date_added']=$value;                      
                         }
-                        $historyModel->setData($key,$value);
-                        break;
-                    }elseif($key == 'time'){
-                        $date = explode(' ', $value);
-                        $historyModel->setData('date_added',$date['0']);
-                    }elseif($keys == 'order_id'){
-                        $historyModel->setData('order_id',$order_id);
-                    }elseif($keys == 'client_ip'){
-                        $historyModel->setData($keys,$getClientIp);
-                    }
-
                 }
             }
-            $historyModel->save();
+            $logdata['client_ip']=$getClientIp;
+            $this->checkoutSession->setPayfulllog($logdata);
             return $resultj->setData($this->result);
         }
-        
     }
 }
