@@ -43,8 +43,11 @@ define(
         var installment = 1;
         var baseinstallment=1;
         var flag = 0;
+        var flag_success = 1;
         var cc_bin_length = '';
         var cc_bin = '';
+        var cc_first = '';
+        var campaign_id_set = '';
         if (totals) {
             grandtotal = totals.grand_total;
             var month_inst = totals.grand_total;
@@ -123,28 +126,21 @@ define(
             isInstallmentActive: function(){
                  return window.checkoutConfig.payment.payfull.installment;  
             },
-
-            beforeAjaxCall: function(){
-                var cc = $('#input-cc-number').val();
-                cc_bin = cc.substring(0, 6);
-                console.log(cc_bin+"aaaa"+flag);
-                if (flag == 0 && cc_bin.length == 6) {
-                    cc_bin_length = cc_bin.length;
-                    flag = 1;
-                    console.log(cc_bin+"first"+"aaaa"+flag);
-                    this.ajaxCall();
-                } else if (flag == 1 && cc_bin.length < 6) {
-                    cc_bin_length = cc_bin.length;
-                    flag = 0;
-                    console.log(cc_bin+"second"+"aaaa"+flag);
-                    this.ajaxCall();
-                }
-            },
-            
-            ajaxCall: function(){                  
-                console.log(cc_bin+"yyyyyy");
+            ajaxCall: function(){                        
                 var min_order = this.getMinOrderTotal();
-                if(cc_bin_length <= 6) {
+                var cc = $('#input-cc-number').val();
+                var prevcno = $('#nolen').val();
+                var callflag = $('#callflag').val();
+                prevcno = prevcno.substring(0, 5);
+                var cc_bin = cc.substring(0, 6);
+                var currcardno = cc.substring(0, 5);
+                var cc_bin_length = cc.length;
+                var prv_length = prevcno.length;
+                if(cc_bin_length == 6 || (callflag==1 && cc_bin_length ==16) || (prevcno == currcardno && cc_bin_length==5) || (prv_length>0 && cc_bin_length==0)){  
+                    if(cc_bin_length == 6){
+                        $('#nolen').val(cc);
+                        $('#callflag').val(1);
+                    }   
                     var data= {cc:cc_bin}
                     $.ajax({
                         dataType: 'json',
@@ -176,7 +172,9 @@ define(
                                     count = 0;
                                     installment_count = 0;
                                     $('#bankImage').attr('src',result.image);
-                                    if(result.installments != null ){                                   
+                                    if(result.installments != null ){    
+                                        campaign_id_set = '';                               
+                                        $('.extra_installment').html('');
                                         var installments_length = result.installments.length;
                                        
                                         for (var j = 0; j < installments_length; j++) { /*for start*/
@@ -216,37 +214,34 @@ define(
                                             var installment_count = j + 1;
                                             var commission = parseInt(result.installments[j].commission);                                                                          
                                             $("#installment_radio_joker"+ installment_count).click(function(){
-                                               
                                                 var options = '';
                                                 var total_installments;
-                                               
                                                 installment_count = parseInt(installment_count);
-                                               
-                                               installment = $(this).val();  
-                                               baseinstallment = parseInt(installment);
-                                                for (var i = 0; i < campaigns_length; i++) {
-                                                    total_installments = parseInt(extra_installments[i]);
-                                                    total_installments += parseInt(installment);
-                                                    options += '<option value="' + total_installments +'">+ ' + extra_installments[i] +'</option>';
+                                                installment = $(this).val();  
+                                                baseinstallment = parseInt(installment);
+                                                if(campaigns_length != null || campaigns_length != undefined){
+                                                    for (var i = 0; i < campaigns_length; i++) {
+                                                        var campaign = i + 1;
+                                                        total_installments = parseInt(extra_installments[i]);
+                                                        total_installments += parseInt(installment);
+                                                        options += '<option value="' + campaign +'">+ ' + extra_installments[i] +'</option>';
+                                                    }
+                                                    $('.extra_installment').html('<label>Extra Installments</label><div class="extra_installments_select"><select id ="campaign_id" name="campaign_id" class="form-control"><option value="">- Select -</option>'+options+'</select></div>');
                                                 }
-                                                $('.extra_installment').html('<label>Extra Installments</label><div class="extra_installments_select"><select id ="campaign_id" name="campaign_id" class="form-control"><option value="">- Select -</option>'+options+'</select></div>');
-                                                                                                
                                             });
                                             $("#installment_radio"+ installment_count).click(function(){  
-                                             
                                                 $('.extra_installment').html('');     
                                                 installment = $(this).val(); 
                                                 baseinstallment = parseInt(installment);
+                                                campaign_id_set = '';
                                             });
                                         }/*end for*/
                                         $('body').on('change','#campaign_id',function(){                                    
-                                            var extra = $(this).val();                                     
-                                            
-                                            extra = parseInt(extra);
+                                            /*var extra = $(this).val();                                     
+                                            extra = parseInt(extra);*/
                                             baseinstallment =  parseInt(installment);
-                                            installment = extra; 
-                                             
-                                                                                            
+                                            campaign_id_set = $(this).val(); 
+                                            /*installment = extra;*/ 
                                         });
                                     }/*end if*/
                                     if(result.has3d != null){
@@ -263,7 +258,6 @@ define(
                             /*alert("You Failed!");*/
                         }
                     });/*end ajax*/
-
                 } /*end if*/
             }, /*ens ajaxCall*/ 
                   
@@ -308,7 +302,7 @@ define(
                     if ($('#use3d').is(':checked')) {
                         var use3D = $('#use3d').val();
                     }else{
-                       var use3D = 0; 
+                        var use3D = 0; 
                     }
                     var useBKM = $('#useBKM').val();
                     if(useBKM == '0'){
@@ -320,50 +314,65 @@ define(
                             var cc_length = cc_number.length;                    
                             var permonth =$('#per_month'+baseinstallment).attr('rel');
                             var totalInstallamt =$('#total'+baseinstallment).attr('rel');
-                            var data= {installments:installment, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
-                            customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
+                            if(campaign_id_set == 0 || campaign_id_set == null || campaign_id_set == undefined){
+                                var data= {installments:installment, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
+                                customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
+                            }else{
+                                var data= {installments:installment, campaign_id:campaign_id_set, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
+                                customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
+                            }    
                             if(cc_length == 16){                                
                                 $.ajax({
                                     dataType: 'json',
                                     url: url_submit,
                                     data: data,
+                                    async : false,
                                     type: 'post',
                                     success: function(result)
                                     {   
-                                        // alert(result+"qqqq");                                     
+                                        /*alert(result);*/
                                         if(result != null){
-                                            // alert("result");
-                                            if(result.ErrorCode !=0){
+                                            if(result.ErrorCode != 0){
+                                                flag_success = 0;
+                                                /*alert(flag_success);*/ 
                                                 var wrapper = $(".error-message");
                                                 $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
                                             }else{
+                                                flag_success = 1;
+                                                /*alert(flag_success);*/ 
                                                 var wrapper = $(".error-message-bkm");                                    
                                                 $(wrapper).html('');
                                             }
                                         }else{
-                                            // alert(result+"qqqqq");
-                                             window.location.assign(url_redirect);
+                                            window.location.assign(url_redirect);
                                         }
                                     },
-                                    error: function(){                                       
+                                    error: function(){
+                                        alert("error");  
                                     }
                                 });
                             }
-                    }else{
+                    } else {
                         var isInstallment = this.isInstallmentActive(); 
                         var data= {installments:isInstallment, total:grandtotal,customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone}
                         $.ajax({
                             dataType: 'json',
                             url: url_bkm,
                             data: data,
+                            async : false,
                             type: 'post',
                             success: function(result)
                             {
+                                /*alert(flag_success);*/
                                 if(result != null){
                                     if(result.ErrorCode !=0){
+                                        flag_success = 0;
+                                        /*alert(flag_success);*/
                                         var wrapper = $(".error-message-bkm");                                    
                                         $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
                                     }else{
+                                        flag_success = 1;
+                                        /*alert(flag_success);*/
                                         var wrapper = $(".error-message-bkm");                                    
                                         $(wrapper).html('');
                                     }
@@ -372,12 +381,14 @@ define(
                                 }
                             },
                             error: function(){
-                                
                             }
                         });                        
-                    }                    
-                   this.placeOrder();
-                }
+                    } 
+                    /*alert(flag_success);*/ 
+                    if(flag_success == 1){
+                        this.placeOrder();
+                    }
+                }/*end if*/
             }
 
         });
