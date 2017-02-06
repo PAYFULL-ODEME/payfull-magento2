@@ -50,9 +50,6 @@ class Payment extends \Magento\Payment\Model\Method\AbstractMethod
         $grandTotal = $cart->getQuote()->getGrandTotal();
         $getClientIp = $this->helper->getClientIp();
 
-        echo $grandTotal."dddd".$getClientIp;
-
-        // $resultj = $this->resultJsonFactory->create();
         $historyModel = $this->_historyFactory->create();
         $collection = $historyModel->getCollection();        
         $field = array();
@@ -61,12 +58,6 @@ class Payment extends \Magento\Payment\Model\Method\AbstractMethod
             $field = array_keys($data);
             break;
         }
-
-        echo <'pre'>;
-        print_r($field);
-
-        echo <'pre'>;
-        print_r($result);
 
         //  add in if last -> && $result->status === true
         if(isset($result)) {
@@ -94,7 +85,6 @@ class Payment extends \Magento\Payment\Model\Method\AbstractMethod
                 }
             }
             $historyModel->save();
-            // return $resultj->setData($result);
         }
         
     }

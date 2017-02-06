@@ -105,6 +105,7 @@ class SaleBKM extends Action
         $this->result = $this->helper->bindCurl($params, $password, $api_url);
 
         $this->result = json_decode($this->result);
+        // var_dump($this->result);exit;
         if(is_string($this->result) && strpos($this->result, '<html')) {
             $this->checkoutSession->setPayfull([
                 'html'=>$this->result

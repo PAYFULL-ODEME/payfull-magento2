@@ -1,0 +1,23 @@
+<?php
+/**
+ * Copyright © 2016 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+?>
+<div id="content">      
+    <p>There was a problem processing your payment and the order did not complete.</p>
+	<p>Possible reasons are:</p>
+	<ul>
+	  <li>Insufficient funds</li>
+	  <li>Verification failed</li>
+	</ul>
+
+	<p>Please try to order again using a different payment method.</p>
+
+</div>
+<?php if ($block->getRealOrderId()) : ?><p><?php /* @escapeNotVerified */ echo __('Order #') . $block->getRealOrderId() ?></p><?php endif ?>
+<?php if ($error = $block->getErrorMessage()) : ?><p><?php /* @escapeNotVerified */ echo $error ?></p><?php endif ?>
+<p><?php /* @escapeNotVerified */ echo __('Click <a href="%1">here</a> to continue shopping.', $block->escapeUrl($block->getContinueShoppingUrl())) ?></p>

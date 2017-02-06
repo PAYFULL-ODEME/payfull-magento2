@@ -51,12 +51,11 @@ class ReturnBKM extends Action
      */
     public function execute()
     {
-        if(isset($_REQUEST)/*&& $_REQUEST['status'] == '1'*/){
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+        if(isset($_REQUEST) && $_REQUEST['status'] == '1'){
             $result = $_REQUEST;
             
             $resultj = $this->resultJsonFactory->create();
-
-            $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
 
             /*$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
@@ -89,7 +88,7 @@ class ReturnBKM extends Action
                                     $logdata['commission_total'] = $commission_total;
                                 }else{
                                     $total = $value * $result['conversion_rate'];
-                                    $logdata['total'] = round($total, 2);
+                                    $logdata['total'] = round($total);
                                     /*$logdata['total'] = $result['original_total'];*/
                                     $logdata['total_try']=$value;
                                     $commission_total = $logdata['total'] - $result['original_total'];
@@ -131,7 +130,9 @@ class ReturnBKM extends Action
             $resultRedirect->setPath('checkout/onepage/success');
             return $resultRedirect;
         }else{
-            echo $_REQUEST['ErrorMSG'];
+            // echo "BKM Express Payment Not Successful";
+            $resultRedirect->setPath('checkout/onepage/failure');
+            return $resultRedirect;
         }
     }
 }

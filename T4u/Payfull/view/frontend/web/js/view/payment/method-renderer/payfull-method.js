@@ -330,16 +330,13 @@ define(
                                     type: 'post',
                                     success: function(result)
                                     {   
-                                        /*alert(result);*/
                                         if(result != null){
                                             if(result.ErrorCode != 0){
                                                 flag_success = 0;
-                                                /*alert(flag_success);*/ 
                                                 var wrapper = $(".error-message");
                                                 $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
                                             }else{
                                                 flag_success = 1;
-                                                /*alert(flag_success);*/ 
                                                 var wrapper = $(".error-message-bkm");                                    
                                                 $(wrapper).html('');
                                             }
@@ -363,16 +360,12 @@ define(
                             type: 'post',
                             success: function(result)
                             {
-                                /*alert(flag_success);*/
                                 if(result != null){
+                                    flag_success = 0;
                                     if(result.ErrorCode !=0){
-                                        flag_success = 0;
-                                        /*alert(flag_success);*/
                                         var wrapper = $(".error-message-bkm");                                    
                                         $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
                                     }else{
-                                        flag_success = 1;
-                                        /*alert(flag_success);*/
                                         var wrapper = $(".error-message-bkm");                                    
                                         $(wrapper).html('');
                                     }
@@ -384,7 +377,6 @@ define(
                             }
                         });                        
                     } 
-                    /*alert(flag_success);*/ 
                     if(flag_success == 1){
                         this.placeOrder();
                     }
