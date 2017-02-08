@@ -7,10 +7,12 @@ namespace T4u\Payfull\Controller\Payment;
 
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\Result\JsonFactory;
 use T4u\Payfull\Helper\Payfullapi;
-use T4u\Payfull\Model\HistoryFactory;/**
+use T4u\Payfull\Model\HistoryFactory;
+use Magento\Framework\Controller\ResultFactory;
+
+/**
  * Class Return3D
  */
 class ReturnBKM extends Action
@@ -35,8 +37,7 @@ class ReturnBKM extends Action
         \Magento\Sales\Model\OrderFactory $orderFactory,
         Payfullapi $helper,
         \Magento\Checkout\Model\Session $checkoutSession,
-        HistoryFactory $historyFactory,
-        ResultFactory $resultFactory
+        HistoryFactory $historyFactory
     ) {
         parent::__construct($context);
         $this->helper = $helper;
@@ -44,15 +45,16 @@ class ReturnBKM extends Action
         $this->_orderFactory = $orderFactory;
         $this->checkoutSession = $checkoutSession;
         $this->_historyFactory = $historyFactory;
-        $this->resultRedirect = $resultFactory;
+        $this->resultRedirect = $context->getResultFactory();
     }
     /**
      * @inheritdoc
      */
     public function execute()
     {
-        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
-        if(isset($_REQUEST) && $_REQUEST['status'] == '1'){
+        $resultRedirect = $this->resultRedirect->create(ResultFactory::TYPE_REDIRECT);
+        
+        if(isset($_REQUEST['status']) && $_REQUEST['status'] == '1'){
             $result = $_REQUEST;
             
             $resultj = $this->resultJsonFactory->create();
@@ -75,9 +77,6 @@ class ReturnBKM extends Action
             //  add in if last -> && $result->status === true
             if(isset($result)) {
                 foreach ($result as $key => $value) {
-                    foreach ($field as $keys) 
-                    {
-                        if($key == $keys){
                             if($key == 'total'){
                                 if($result['original_currency'] == $result['currency']){
                                     $logdata['total']=$value;
@@ -97,40 +96,52 @@ class ReturnBKM extends Action
                                     $logdata['commission_total'] = $commission_total;
                                 }
                                 break;
-                            }elseif($key == 'status'){ 
-                                if($value == 0){
-                                    $logdata['status']='Failed';
-                                }else{
-                                    $logdata['status']='Complete';
-                                }
-                                break;
+                            }elseif($key == 'store_id'){                        
+                                $logdata['store_id']='1';
+                                 // break;
+                            }elseif($key == 'transaction_id'){                        
+                                $logdata['transaction_id']=$value;
+                                 // break;
+                            }elseif($key == 'total_try'){                        
+                                $logdata['total_try']=$value;
+                                 // break;
+                            }elseif($key == 'conversion_rate'){                        
+                                $logdata['conversion_rate']=$value;
+                                 // break;
+                            }elseif($key == 'bank_id'){                        
+                                $logdata['bank_id']=$value;
+                                 // break;
                             }elseif($key == 'use3d'){ 
                                 if($value == 0){
                                     $logdata['use3d']='No';
                                 }else{
                                     $logdata['use3d']='Yes';
                                 }                       
-                                break;
+                                // break;
+                            }elseif($key == 'installments'){                        
+                                $logdata['installments']=$value;
+                                 // break;
+                            }elseif($key == 'extra_installments'){                        
+                                $logdata['extra_installments']=$value;
+                                 // break;
+                            }elseif($key == 'status'){ 
+                                if($value == 0){
+                                    $logdata['status']='Failed';
+                                }else{
+                                    $logdata['status']='Complete';
+                                }
+                                // break;
+                            }elseif($key == 'time'){                        
+                                $logdata['date_added']=$value;
+                                // break;
                             }
-                            $logdata[$key]=$value;
-                            break;
-                        }elseif($key == 'time'){
-                            $logdata['date_added']=$value;                      
-                        }elseif($keys == 'client_ip'){
-                            $logdata['client_ip']=$getClientIp;
-                        }
-                    }
                 }
+                $logdata['client_ip']=$getClientIp;
                 $this->checkoutSession->setPayfulllog($logdata);
-                /*$historyModel->setData($logdata);
-                $historyModel->save();*/                
             }
-            /*echo "BKM Express Payment Successful";*/
-            // return $resultj->setData($result);
             $resultRedirect->setPath('checkout/onepage/success');
             return $resultRedirect;
         }else{
-            // echo "BKM Express Payment Not Successful";
             $resultRedirect->setPath('checkout/onepage/failure');
             return $resultRedirect;
         }

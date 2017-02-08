@@ -7,6 +7,8 @@ namespace T4u\Payfull\Helper;
 
 use Magento\Directory\Model\ResourceModel\Country\CollectionFactory;
 use Magento\Framework\Encryption\Encryptor;
+use Magento\Framework\View\Asset\Repository;
+use Magento\Framework\App\RequestInterface;
 /**
  * Class Country
  */
@@ -48,6 +50,16 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
     public $exchangeRate;
 
     public $baseUrl;
+
+    /**
+     * @var Repository
+     */
+    protected $assetRepository;
+
+    /**
+     * @var RequestInterface
+     */
+    protected $request;
         
     /**
      * @param \Magento\Directory\Model\ResourceModel\Country\CollectionFactory $factory
@@ -57,12 +69,16 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Directory\Model\ResourceModel\Country\CollectionFactory $factory,
         \Magento\Braintree\Model\Adminhtml\System\Config\Country $countryConfig,        
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Encryption\Encryptor $crypt
+        \Magento\Framework\Encryption\Encryptor $crypt,
+        RequestInterface $request,
+        Repository $assetRepository
     ) {
         $this->collectionFactory = $factory;
         $this->countryConfig = $countryConfig;
         $this->_scopeConfig = $scopeConfig;   
         $this->_crypt = $crypt;
+        $this->request = $request;
+        $this->assetRepository = $assetRepository;
     }
     
     public function bindCurl($params, $merchantPassword, $api_url)
@@ -163,40 +179,45 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         // send curl call 
         $response = $this->bindCurl($params, $password, $api_url);
         $getMinOrderTotal = $this->getMinOrderTotal();
-        
-        // get cart order grandtotal
-        
-        if($this->getInstallment() == '1'){ 
+
+        $response = json_decode($response);
+        if(isset($response) && $response->data->bank_id != ''){
+            $bankName = $response->data->bank_id;
+            $param = array('_secure' => $this->request->isSecure());
+            $bankImageUrl = array();
+            $bankImageUrl = array('bankImageUrl' => $this->assetRepository->getUrlWithParams('T4u_Payfull::images/'.$bankName.'.png', $param));
+            $response = (object)array_merge((array)$response, (array)$bankImageUrl);
+        }
+        if(isset($response) && $this->getInstallment() == '1' /*&& $response->data->type != 'DEBIT'*/){ 
             if($this->grandTotal >= $getMinOrderTotal){         
                 $params = $this->_createParmList($apiUname,$cc_no_first_six,'Installments');            
                 $responseList = $this->bindCurl($params, $password, $api_url);                 
-                $response = json_decode($response);
                 $responseList = json_decode($responseList);
+                $this->resultresponse = $response;  
                 if(isset($responseList)){
-                foreach ($responseList->data as $index) {               
-                    if($index->bank == $response->data->bank_id){
-                        $this->installment = count($index->installments)-1;
-                        $this->bankId = $response->data->bank_id;
-                        $this->gateway = $index->gateway;
-                        $this->resultresponse = $response ;             
-                        $this->resultresponse = (object)array_merge((array)$response, (array)$index);
-                        if($this->getExtraInstallment() == '1'){
-                            $params = $this->_createParmList($apiUname,$cc_no_first_six,'ExtraInstallments');
-                            $extraInstallment = $this->bindCurl($params, $password, $api_url);
-                            $extraInstallment = json_decode($extraInstallment);
-                            // $this->exchangeRate = $extraInstallment->data->exchange_rate;
-                            
-                            $params = $this->_createParmList($apiUname,$cc_no_first_six,'ExtraInstallmentsList');
-                            $extraInstallmentList = $this->bindCurl($params, $password, $api_url);
-                            $extraInstallmentList = json_decode($extraInstallmentList);
-                            $this->resultresponse = (object)array_merge((array)$this->resultresponse, (array)$extraInstallment->data);
-                            if(isset($extraInstallment->data->campaigns)){
-                                $this->resultresponse = (object)array_merge((array)$this->resultresponse, (array)$extraInstallmentList->data->campaigns);
+                    foreach ($responseList->data as $index) {               
+                        if($index->bank == $response->data->bank_id){
+                            $this->installment = count($index->installments)-1;
+                            $this->bankId = $response->data->bank_id;
+                            $this->gateway = $index->gateway;           
+                            $this->resultresponse = (object)array_merge((array)$response, (array)$index);
+                            if($this->getExtraInstallment() == '1'){
+                                $params = $this->_createParmList($apiUname,$cc_no_first_six,'ExtraInstallments');
+                                $extraInstallment = $this->bindCurl($params, $password, $api_url);
+                                $extraInstallment = json_decode($extraInstallment);
+                                // $this->exchangeRate = $extraInstallment->data->exchange_rate;
+                                
+                                $params = $this->_createParmList($apiUname,$cc_no_first_six,'ExtraInstallmentsList');
+                                $extraInstallmentList = $this->bindCurl($params, $password, $api_url);
+                                $extraInstallmentList = json_decode($extraInstallmentList);
+                                $this->resultresponse = (object)array_merge((array)$this->resultresponse, (array)$extraInstallment->data);
+                                if(isset($extraInstallment->data->campaigns)){
+                                    $this->resultresponse = (object)array_merge((array)$this->resultresponse, (array)$extraInstallmentList->data->campaigns);
+                                }
                             }
                         }
                     }
                 }
-            }
             }
         }else{          
             $this->resultresponse = $response;
@@ -246,7 +267,6 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
         $params = array_merge($params, $extra_params);           
-        // var_dump($params);exit;
         return $params;     
     }
     public function sendSale($defaults, $saleType)
@@ -288,7 +308,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         $response = $this->bindCurl($params, $password, $api_url); 
         $response = json_decode($response);
     
-        $this->resultresponse = $response;       
+        $this->resultresponse = $response; 
         return $this->resultresponse;
     }
     /**
@@ -314,16 +334,24 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
             "customer_lastname"  => 'Alabed',
 			"customer_email"     => 'mohmmadalabed@gmail.com',
 			"customer_phone"     => '265656565',
-            "customer_tc"        => '12590326514',
-
-            "passive_data"  => '####aaaa',            
+            "customer_tc"        => '12590326514'
+            /*,
+            "passive_data"  => '####aaaa',       */     
          );
         if(isset($defaults['use3d']) && $defaults['use3d'] == 1){
             $extraParam = array(
                 "return_url"      => $this->baseUrl.'payfull/payment/Return3D' 
             );
             $params = array_merge($params, $extraParam);
-        }     
+        } 
+        if($this->currencyCode != 'TRY'){
+                $extra_params = array(
+                    "exchange_rate"   => '1'/*$this->exchangeRate*/,
+                    "currency"        => $this->currencyCode);
+            }else{
+                $extra_params = array(
+                    "currency"        => $this->currencyCode);
+            }    
         $params = array_merge($defaults, $params);
         return $params;     
     }

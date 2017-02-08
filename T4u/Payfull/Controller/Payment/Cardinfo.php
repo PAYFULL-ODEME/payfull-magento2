@@ -98,7 +98,6 @@ class Cardinfo extends Action
         //  add in if last -> && $this->result->status === true
         /*if(is_object($this->result))*/
         // response in html when we use 3D_Secure
-        // var_dump($this->result);exit;
         if (is_string($this->result) && strpos($this->result, '<html')) {
             $this->checkoutSession->setPayfull([
                 'secure'=>true,
@@ -107,9 +106,9 @@ class Cardinfo extends Action
         } else if (isset($this->result) && is_object($this->result)) {
             
             foreach ($this->result as $key => $value) {
-               
-                foreach ($field as $keys) 
-                {   
+
+                /*foreach ($field as $keys) 
+                { */  
                     if($key == 'total'){
                         if($this->result->original_currency == $this->result->currency){
                             $logdata['total']=$value;
@@ -127,47 +126,47 @@ class Cardinfo extends Action
                             $payfull = $this->checkoutSession->getPayfull();
                             $logdata['commission_total'] = $commission_total;
                         }
-                        break;
+                        // break;
                     }elseif($key == 'store_id'){                        
                         $logdata['store_id']='1';
-                         break;
+                         // break;
                     }elseif($key == 'transaction_id'){                        
                         $logdata['transaction_id']=$value;
-                         break;
+                         // break;
                     }elseif($key == 'total_try'){                        
                         $logdata['total_try']=$value;
-                         break;
+                         // break;
                     }elseif($key == 'conversion_rate'){                        
                         $logdata['conversion_rate']=$value;
-                         break;
+                         // break;
                     }elseif($key == 'bank_id'){                        
                         $logdata['bank_id']=$value;
-                         break;
+                         // break;
                     }elseif($key == 'use3d'){ 
                         if($value == 0){
                             $logdata['use3d']='No';
                         }else{
                             $logdata['use3d']='Yes';
                         }                       
-                        break;
+                        // break;
                     }elseif($key == 'installments'){                        
                         $logdata['installments']=$value;
-                         break;
+                         // break;
                     }elseif($key == 'extra_installments'){                        
                         $logdata['extra_installments']=$value;
-                         break;
+                         // break;
                     }elseif($key == 'status'){ 
                         if($value == 0){
                             $logdata['status']='Failed';
                         }else{
                             $logdata['status']='Complete';
                         }
-                        break;
+                        // break;
                     }elseif($key == 'time'){                        
                         $logdata['date_added']=$value;
-                        break;
+                        // break;
                     }
-                }
+                /*}*/
             }
             $logdata['client_ip']=$getClientIp;
             $this->checkoutSession->setPayfulllog($logdata);

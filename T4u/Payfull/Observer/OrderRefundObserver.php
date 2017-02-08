@@ -63,11 +63,11 @@ class OrderRefundObserver implements \Magento\Framework\Event\ObserverInterface 
                // $order->save();
                 $defaults = array("type"         => 'Return',
                                   "transaction_id"  => $transaction_id,
-                                  'total': '23.02',
+                                  'total' => '23.02',
                                   "passive_data"  => '');
                 // var_dump($defaults);exit;
                 $response = $this->helper->cancelOrder($defaults);
-                var_dump($response);exit;
+                /*var_dump($response);exit;*/
             }
         }
     }

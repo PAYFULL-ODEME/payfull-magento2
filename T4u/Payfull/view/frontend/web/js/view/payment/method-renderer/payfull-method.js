@@ -23,7 +23,6 @@ define(
         var totals = quote.totals();
         var grandtotal_first = 0;
         var grandtotal = 0;
-        var count = 0;
         var use3D = 0;
         var result_cc_month = 0;
         var result_cc_year = 0;
@@ -34,6 +33,7 @@ define(
         var url_submit = url.build('payfull/payment/cardinfo');
         var url_bkm = url.build('payfull/payment/salebkm');
         var url_redirect = url.build('payfull/payment/redirectaction');
+        var url_ajaxLoaderImage = url.build('pub/static/frontend/Magento/luma/en_US/T4u_Payfull/images/ajax/ajax_loader_checkout.gif');
         var bank_id = '';
         var gateway = '';
         var campaign_id = new Array();
@@ -149,12 +149,21 @@ define(
                         type: 'post',
                         success: function(result)
                         {   
+                            /* when user re-enter details then no-error msg default */
+                            $(".error-message").html('');
+                            $(".error-message-bkm").html('');
                             var html = '' ;
                             var wrapper = $(".installment_row"); /*Fields wrapper*/
-                            if(result == null){
+                            if(result == null || result.installments == null){
                                 var grandtotal_null = priceUtils.formatPrice(grandtotal, quote.getPriceFormat());
                                 /*some this wrong with api*/
-                                $('#bankImage').attr('src',''); 
+                                if(result != null){ 
+                                    if(result.bankImageUrl != null && result.bankImageUrl != undefined){
+                                        $('#bankImage').attr('src',result.bankImageUrl);
+                                    }else{
+                                        $('#bankImage').attr('src','');
+                                    } 
+                                }
                                 html += '<div class="install_body_label installment_radio"><input rel="1" class="installment_radio" id="installment_radio" checked="" name="installments" value="1" type="radio"></div>';
                                 html += '<div class="install_body_label installment_lable_code"><span data-bind="text: installment">One Shot</span></div>';
                                 html +='<div class="install_body_label">';
@@ -164,14 +173,24 @@ define(
                                 html +='<span data-bind="text: total">'+grandtotal_null+'</span>';
                                 html +='</div></div>';   
                                 $(wrapper).html(html);
+                                if(result.has3d != null){
+                                    if(result.has3d == 1) {
+                                        $('.payfull-checkbox').show();                                        
+                                    }else{
+                                        $('.payfull-checkbox').hide(); 
+                                    }                                    
+                                }/*end if*/
                             }else{
                                 bank_id = result.bank;
                                 gateway = result.gateway;                                        
                             
                                 if(grandtotal >= min_order){
-                                    count = 0;
                                     installment_count = 0;
-                                    $('#bankImage').attr('src',result.image);
+                                    if(result.bankImageUrl != null && result.bankImageUrl != undefined){
+                                        $('#bankImage').attr('src',result.bankImageUrl);
+                                    }else{
+                                        $('#bankImage').attr('src','');
+                                    }
                                     if(result.installments != null ){    
                                         campaign_id_set = '';                               
                                         $('.extra_installment').html('');
@@ -237,11 +256,8 @@ define(
                                             });
                                         }/*end for*/
                                         $('body').on('change','#campaign_id',function(){                                    
-                                            /*var extra = $(this).val();                                     
-                                            extra = parseInt(extra);*/
                                             baseinstallment =  parseInt(installment);
                                             campaign_id_set = $(this).val(); 
-                                            /*installment = extra;*/ 
                                         });
                                     }/*end if*/
                                     if(result.has3d != null){
@@ -292,9 +308,39 @@ define(
             validateForm: function (form) {
                  return $(form).validation() && $(form).validation('isValid');
             },
-
+            validateCardExpiryMonth: function (month, year) {
+                var d = new Date();
+                var current_month = d.getMonth();
+                var current_year = d.getFullYear();
+                if(current_year == year) {   
+                    if(++current_month < month){
+                        $(".error-message-month").html('');
+                        return true;
+                    }else{
+                        $(".error-message-month").html('<div class="message message-warning warning"><span>Incorrect Expiry Month</span></div>');
+                        return false;
+                    }
+                }else{
+                    $(".error-message-month").html('');
+                    return true;
+                }
+            },
+            validateCardExpiryYear: function (year) {
+                 var d = new Date();
+                 var current_year = d.getFullYear();
+                 if(current_year <= year){
+                    $(".error-message-year").html('');
+                    return true;
+                 }else{
+                    $(".error-message-year").html('<div class="message message-warning warning"><span>Incorrect Expiry Year</span></div>');
+                   return false;
+                 }
+            },
             submitForm: function(){
                 if (this.validateForm('#payfull-form')) {
+                    $(".ajaxLoader").html('<div class="primary"><img id="ajaxLoader" width="42" height="42" src="' + url_ajaxLoaderImage + '"></div>');
+                    $(".error-message").html('');
+                    $(".error-message-bkm").html('');
                     var firstname = this.getFirstName();
                     var lastname = this.getLastName();
                     var phone = this.getPhone();
@@ -311,7 +357,9 @@ define(
                             var cc_month = $('#input-cc-month').val();
                             var cc_year = $('#input-cc-year').val();
                             var cc_cvc = $('#input-cc-cvc').val();
-                            var cc_length = cc_number.length;                    
+                            var cc_length = cc_number.length;
+                            var expiry_month = this.validateCardExpiryMonth(cc_month, cc_year);                   
+                            var expiry_year = this.validateCardExpiryYear(cc_year);                   
                             var permonth =$('#per_month'+baseinstallment).attr('rel');
                             var totalInstallamt =$('#total'+baseinstallment).attr('rel');
                             if(campaign_id_set == 0 || campaign_id_set == null || campaign_id_set == undefined){
@@ -321,7 +369,7 @@ define(
                                 var data= {installments:installment, campaign_id:campaign_id_set, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
                                 customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
                             }    
-                            if(cc_length == 16){                                
+                            if(cc_length == 16 && expiry_month == true && expiry_year == true){
                                 $.ajax({
                                     dataType: 'json',
                                     url: url_submit,
@@ -330,24 +378,28 @@ define(
                                     type: 'post',
                                     success: function(result)
                                     {   
-                                        if(result != null){
-                                            if(result.ErrorCode != 0){
-                                                flag_success = 0;
-                                                var wrapper = $(".error-message");
-                                                $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
-                                            }else{
+                                        if(result != null) {
+                                            if(result.ErrorCode == 0){
                                                 flag_success = 1;
-                                                var wrapper = $(".error-message-bkm");                                    
-                                                $(wrapper).html('');
+                                                $(".error-message").html('');
+                                            } else {
+                                                flag_success = 0;
+                                                $(".error-message").html('<div class="message message-warning warning"><span>' + result.ErrorMSG + '</span></div>');
                                             }
-                                        }else{
+                                        } else if ( use3D != null && use3D == 1 && result == null){
+                                            flag_success = 1;
                                             window.location.assign(url_redirect);
+                                        } else {
+                                            flag_success = 0;    
+                                            $(".error-message").html('<div class="message message-warning warning"><span>Something happend wrong please try again!</span></div>');
                                         }
                                     },
                                     error: function(){
-                                        alert("error");  
+                                        /*alert("error");*/  
                                     }
                                 });
+                            } else {
+                                flag_success = 0;
                             }
                     } else {
                         var isInstallment = this.isInstallmentActive(); 
@@ -362,15 +414,19 @@ define(
                             {
                                 if(result != null){
                                     flag_success = 0;
-                                    if(result.ErrorCode !=0){
-                                        var wrapper = $(".error-message-bkm");                                    
-                                        $(wrapper).html('<div class="message message-warning warning">' + result.ErrorMSG + '</div>');
-                                    }else{
+                                    if(result.ErrorCode == 0){
                                         var wrapper = $(".error-message-bkm");                                    
                                         $(wrapper).html('');
+                                    } else {
+                                        var wrapper = $(".error-message-bkm");                                    
+                                        $(wrapper).html('<div class="message message-warning warning"><span>' + result.ErrorMSG + '</span></div>');
                                     }
-                                }else{
+                                } else if( useBKM != null && useBKM == 1 && result == null){
+                                    flag_success = 1;
                                     window.location.assign(url_redirect);
+                                } else {
+                                    flag_success = 0;
+                                    $(".error-message-bkm").html('<div class="message message-warning warning"><span>Something happend wrong please try again!</span></div>');
                                 }
                             },
                             error: function(){
@@ -379,6 +435,8 @@ define(
                     } 
                     if(flag_success == 1){
                         this.placeOrder();
+                    } else {
+                        $(".ajaxLoader").html('');
                     }
                 }/*end if*/
             }
