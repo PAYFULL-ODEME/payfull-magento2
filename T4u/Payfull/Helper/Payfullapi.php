@@ -185,10 +185,14 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
             $bankName = $response->data->bank_id;
             $param = array('_secure' => $this->request->isSecure());
             $bankImageUrl = array();
-            $bankImageUrl = array('bankImageUrl' => $this->assetRepository->getUrlWithParams('T4u_Payfull::images/'.$bankName.'.png', $param));
+            if($response->data->type == 'CREDIT'){
+                $bankImageUrl = array('bankImageUrl' => $this->assetRepository->getUrlWithParams('T4u_Payfull::images/credit_banks/'.$bankName.'.png', $param));
+            }else{
+                $bankImageUrl = array('bankImageUrl' => $this->assetRepository->getUrlWithParams('T4u_Payfull::images/debit_banks/'.$bankName.'.png', $param));                
+            }
             $response = (object)array_merge((array)$response, (array)$bankImageUrl);
         }
-        if(isset($response) && $this->getInstallment() == '1' /*&& $response->data->type != 'DEBIT'*/){ 
+        if(isset($response) && $this->getInstallment() == '1' && $response->data->type != 'DEBIT'){ 
             if($this->grandTotal >= $getMinOrderTotal){         
                 $params = $this->_createParmList($apiUname,$cc_no_first_six,'Installments');            
                 $responseList = $this->bindCurl($params, $password, $api_url);                 

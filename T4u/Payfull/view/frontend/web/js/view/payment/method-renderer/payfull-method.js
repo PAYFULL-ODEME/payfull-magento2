@@ -13,7 +13,7 @@ define(
         'mage/url',
         'Magento_Checkout/js/view/payment/default',
         'Magento_Payment/js/view/payment/cc-form',     
-        'Magento_Payment/js/model/credit-card-validation/validator',
+        'T4u_Payfull/js/model/validator',
         'mage/validation'           
     ],
     function ($, ko, quote, priceUtils, url, Component) {
@@ -152,6 +152,7 @@ define(
                             /* when user re-enter details then no-error msg default */
                             $(".error-message").html('');
                             $(".error-message-bkm").html('');
+                            $('#bankImage').attr('src','');
                             var html = '' ;
                             var wrapper = $(".installment_row"); /*Fields wrapper*/
                             if(result == null || result.installments == null){
