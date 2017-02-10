@@ -76,8 +76,6 @@ class Cardinfo extends Action
 
         $grandTotal = $cart->getQuote()->getGrandTotal();
 
-        /*$this->checkoutSession->setPayfull(['grandTotal'=>$grandTotal]);*/
-
         $getClientIp = $this->helper->getClientIp();
 
 
@@ -107,8 +105,6 @@ class Cardinfo extends Action
             
             foreach ($this->result as $key => $value) {
 
-                /*foreach ($field as $keys) 
-                { */  
                     if($key == 'total'){
                         if($this->result->original_currency == $this->result->currency){
                             $logdata['total']=$value;
@@ -126,47 +122,35 @@ class Cardinfo extends Action
                             $payfull = $this->checkoutSession->getPayfull();
                             $logdata['commission_total'] = $commission_total;
                         }
-                        // break;
                     }elseif($key == 'store_id'){                        
                         $logdata['store_id']='1';
-                         // break;
                     }elseif($key == 'transaction_id'){                        
                         $logdata['transaction_id']=$value;
-                         // break;
                     }elseif($key == 'total_try'){                        
                         $logdata['total_try']=$value;
-                         // break;
                     }elseif($key == 'conversion_rate'){                        
                         $logdata['conversion_rate']=$value;
-                         // break;
                     }elseif($key == 'bank_id'){                        
                         $logdata['bank_id']=$value;
-                         // break;
                     }elseif($key == 'use3d'){ 
                         if($value == 0){
                             $logdata['use3d']='No';
                         }else{
                             $logdata['use3d']='Yes';
                         }                       
-                        // break;
                     }elseif($key == 'installments'){                        
                         $logdata['installments']=$value;
-                         // break;
                     }elseif($key == 'extra_installments'){                        
                         $logdata['extra_installments']=$value;
-                         // break;
                     }elseif($key == 'status'){ 
                         if($value == 0){
                             $logdata['status']='Failed';
                         }else{
                             $logdata['status']='Complete';
                         }
-                        // break;
                     }elseif($key == 'time'){                        
                         $logdata['date_added']=$value;
-                        // break;
                     }
-                /*}*/
             }
             $logdata['client_ip']=$getClientIp;
             $this->checkoutSession->setPayfulllog($logdata);

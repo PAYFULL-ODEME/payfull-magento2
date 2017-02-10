@@ -35,12 +35,12 @@
                   <input name="cc_name" value="" placeholder="Name on Card" id="input-cc-name" class="form-control" type="text" data-validate="{'required-entry':true, 'validate-alphanum-with-spaces':true}">
                 </div>
               </div>
-                 
+                  
               <div class="payfull_form-group">
                 <label class="payfull-label" for="input-cc-number">Credit Card Number</label>
-                <div class="payfull-input">
+                <div class="payfull-input">                    
                   <input name="cc_number" value="" placeholder="Credit Card Number" id="input-cc-number" class="input-cc-number-not-supported form-control" maxlength="16" type="text" data-validate="{'required-entry':true,
-                  'validate-card-number':true, 'validate-number':true}" oninput="setInputImage(event, this.value);",
+                  'validate-card-number':true, 'validate-number':true}",
                   data-bind="event: {input: ajaxCall}">
                   <input type="hidden" name="nolen" id="nolen" value=""/>
                   <input type="hidden" name="callflag" id="callflag" value="1"/>

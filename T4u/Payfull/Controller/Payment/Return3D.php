@@ -58,30 +58,13 @@ class Return3D extends Action
             $result = $_REQUEST;
             $resultj = $this->resultJsonFactory->create();
 
-            
-            /*$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
-
-            $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
-            
-            $grandTotal = $this->checkoutSession->getPayfull('grandTotal');
-            echo $grandTotal['grandTotal']."aaa";exit;*/
             $getClientIp = $this->helper->getClientIp();
 
             $historyModel = $this->_historyFactory->create();
             $collection = $historyModel->getCollection();        
-            $field = array();
-            foreach ($collection->getData() as $data ) 
-            {            
-                $field = array_keys($data);
-                break;
-            }
             /*add in if last -> && $result->status === true*/
             if(isset($result)) {
                 foreach ($result as $key => $value) {
-                    /*foreach ($field as $keys) 
-                    {*/
-                        /*if($key == $keys){*/
                             if($key == 'total'){
                                 if($result['original_currency'] == $result['currency']){
                                     $logdata['total']=$value;
@@ -138,14 +121,14 @@ class Return3D extends Action
                                 // break;
                             }elseif($key == 'time'){                        
                                 $logdata['date_added']=$value;
-                                // break;
                             }
                 }
                 $logdata['client_ip']=$getClientIp;
                 $this->checkoutSession->setPayfulllog($logdata);
+                // echo "<script type='text/javascript'>placeOrder();</script>";
+                $resultRedirect->setPath('checkout/onepage/success');
+                return $resultRedirect;
             }
-            $resultRedirect->setPath('checkout/onepage/success');
-            return $resultRedirect;
         }else{
             $resultRedirect->setPath('checkout/onepage/failure');
             return $resultRedirect;

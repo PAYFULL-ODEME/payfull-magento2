@@ -59,21 +59,10 @@ class ReturnBKM extends Action
             
             $resultj = $this->resultJsonFactory->create();
 
-            /*$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-
-            $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
-
-            $grandTotal = $cart->getQuote()->getGrandTotal();*/
             $getClientIp = $this->helper->getClientIp();
 
             $historyModel = $this->_historyFactory->create();
             $collection = $historyModel->getCollection();        
-            $field = array();
-            foreach ($collection->getData() as $data ) 
-            {            
-                $field = array_keys($data);
-                break;
-            }
             //  add in if last -> && $result->status === true
             if(isset($result)) {
                 foreach ($result as $key => $value) {

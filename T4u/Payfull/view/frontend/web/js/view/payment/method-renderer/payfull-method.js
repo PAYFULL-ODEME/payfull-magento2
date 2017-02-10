@@ -33,7 +33,8 @@ define(
         var url_submit = url.build('payfull/payment/cardinfo');
         var url_bkm = url.build('payfull/payment/salebkm');
         var url_redirect = url.build('payfull/payment/redirectaction');
-        var url_ajaxLoaderImage = url.build('pub/static/frontend/Magento/luma/en_US/T4u_Payfull/images/ajax/ajax_loader_checkout.gif');
+        var url_image = url.build('pub/static/frontend/Magento/luma/en_US/T4u_Payfull/images/');
+        var url_ajaxLoaderImage = url_image+'ajax/ajax_loader_checkout.gif';
         var bank_id = '';
         var gateway = '';
         var campaign_id = new Array();
@@ -126,9 +127,25 @@ define(
             isInstallmentActive: function(){
                  return window.checkoutConfig.payment.payfull.installment;  
             },
-            ajaxCall: function(){                        
+            setInputImage: function(value)
+            {   
+                var first_n_char = value.substring(0, 1);
+                if(first_n_char=='4'){
+                    $("#input-cc-number").css('background','rgba(0, 0, 0, 0) url("'+url_image+'card_type_images/payfull_creditcard_visa.png") no-repeat scroll right center / 8% auto'); 
+                }
+                else if(first_n_char=='5'){
+                    $("#input-cc-number").css('background','rgba(0, 0, 0, 0) url("'+url_image+'card_type_images/payfull_creditcard_master.png") no-repeat scroll right center / 8% auto'); 
+                }
+                else{        
+                    $("#input-cc-number").css('background','rgba(0, 0, 0, 0) url("'+url_image+'card_type_images/payfull_creditcard_not_supported.png") no-repeat scroll right center / 8% auto'); 
+                }
+                return true;
+            },
+
+            ajaxCall: function(){ 
                 var min_order = this.getMinOrderTotal();
                 var cc = $('#input-cc-number').val();
+                this.setInputImage(cc);
                 var prevcno = $('#nolen').val();
                 var callflag = $('#callflag').val();
                 prevcno = prevcno.substring(0, 5);

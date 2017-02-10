@@ -159,7 +159,7 @@ ul.payfull-tabs li a:focus, ul.payfull-tabs li a.active {background-color: #ccc;
     margin: 0;
 }
 .payfull-input input.input-cc-number-not-supported[type="text"] {
-    background: rgba(0, 0, 0, 0) url("payfull_creditcard_not_supported.png") no-repeat scroll right center / 8% auto;
+    background: rgba(0, 0, 0, 0) url("../images/card_type_images/payfull_creditcard_not_supported.png") no-repeat scroll right center / 8% auto;
     float: left;
 }
 .joker {
