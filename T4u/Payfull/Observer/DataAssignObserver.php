@@ -55,8 +55,15 @@ class DataAssignObserver implements \Magento\Framework\Event\ObserverInterface {
                 unset($payfull['payfull_commission']);
                 $order->setPayfullCommission($commission);
             }
-            $order->save();
+
             $payfulldata = $this->_checkoutSession->getPayfulllog();
+
+            if($payfulldata['status'] == 'Complete'){
+                $order->setStatus('complete');
+            } else {
+                $order->setStatus('canceled');
+            }
+            $order->save();
             $historyModel = $this->_historyFactory->create();
            
             if(isset($payfulldata['transaction_id'])){    

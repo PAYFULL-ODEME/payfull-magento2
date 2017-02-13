@@ -98,7 +98,7 @@ class Return3D extends Action
                                     $logdata['commission_total'] = $commission_total;
                                 }else{
                                     $total = $value * $result['conversion_rate'];
-                                    $logdata['total'] = round($total);
+                                    $logdata['total'] = round($total, 1);
                                     /*$logdata['total'] = $result['original_total'];*/
                                     $logdata['total_try']=$value;
                                     $commission_total = $logdata['total'] - $result['original_total'];
