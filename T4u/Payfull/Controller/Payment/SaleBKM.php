@@ -105,60 +105,12 @@ class SaleBKM extends Action
         $this->result = $this->helper->bindCurl($params, $password, $api_url);
 
         $this->result = json_decode($this->result);
-        // var_dump($this->result);exit;
+
         if(is_string($this->result) && strpos($this->result, '<html')) {
             $this->checkoutSession->setPayfull([
                 'html'=>$this->result
             ]);
         } else if (isset($this->result) && is_object($this->result)) {
-            
-            foreach ($this->result as $key => $value) {
-               
-                foreach ($field as $keys) 
-                {   
-                    if($key == $keys){
-                            if($key == 'total'){
-                                if($this->result->original_currency == $this->result->currency){
-                                    $logdata['total']=$value;
-                                    $logdata['total_try']=$value;
-                                    $commission_total = $value - $grandTotal;
-                                    $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
-                                    $payfull = $this->checkoutSession->getPayfull();
-                                    $logdata['commission_total'] = $commission_total;
-                                }else{
-                                    $total = $value * $this->result->conversion_rate;
-                                    $logdata['total'] = round($total, 2);
-                                    $logdata['total_try']=$value;
-                                    $commission_total = $logdata['total'] - $grandTotal;
-                                    $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
-                                    $payfull = $this->checkoutSession->getPayfull();
-                                    $logdata['commission_total'] = $commission_total;
-                                }
-                                break;
-                            }elseif($key == 'status'){ 
-                                if($value == 0){
-                                    $logdata['status']='Failed';
-                                }else{
-                                    $logdata['status']='Complete';
-                                }
-                                break;
-                            }elseif($key == 'use3d'){ 
-                                if($value == 0){
-                                    $logdata['use3d']='No';
-                                }else{
-                                    $logdata['use3d']='Yes';
-                                }                       
-                                break;
-                            }
-                            $logdata[$key]=$value;
-                            break;
-                        }elseif($key == 'time'){
-                            $logdata['date_added']=$value;                      
-                        }
-                }
-            }
-            $logdata['client_ip']=$getClientIp;
-            $this->checkoutSession->setPayfulllog($logdata);
             return $resultj->setData($this->result);
         }
     }

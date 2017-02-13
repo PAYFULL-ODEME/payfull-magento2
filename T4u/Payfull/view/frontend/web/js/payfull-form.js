@@ -17,3 +17,6 @@ function openPaymentMethod(evt, paymentName) {
     document.getElementById("useBKM").value = '0';        
     }
 }
+function temp() {
+    alert("ssssssssssss");
+}

@@ -74,6 +74,9 @@ class Cardinfo extends Action
 
         $cart = $objectManager->get('\Magento\Checkout\Model\Cart');
 
+        $store = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
+        $store_id = $store->getStore()->getId();
+
         $grandTotal = $cart->getQuote()->getGrandTotal();
 
         $getClientIp = $this->helper->getClientIp();
@@ -84,15 +87,8 @@ class Cardinfo extends Action
         $historyModel = $this->_historyFactory->create();
 
         $collection = $historyModel->getCollection();        
-        $field = array();
         $logdata = array();
 
-        foreach ($collection->getData() as $data ) 
-        {            
-            $field = array_keys($data);
-            
-            break;
-        }
         //  add in if last -> && $this->result->status === true
         /*if(is_object($this->result))*/
         // response in html when we use 3D_Secure
@@ -123,7 +119,7 @@ class Cardinfo extends Action
                             $logdata['commission_total'] = $commission_total;
                         }
                     }elseif($key == 'store_id'){                        
-                        $logdata['store_id']='1';
+                        $logdata['store_id'] = $store_id;
                     }elseif($key == 'transaction_id'){                        
                         $logdata['transaction_id']=$value;
                     }elseif($key == 'total_try'){                        

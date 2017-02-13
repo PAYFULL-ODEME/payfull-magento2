@@ -11,6 +11,12 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use T4u\Payfull\Helper\Payfullapi;
 use T4u\Payfull\Model\HistoryFactory;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Checkout\Model\Session;
+use Magento\Sales\Model\OrderFactory;
+use Magento\Quote\Model\Quote;
+use Magento\Checkout\Model\Type\Onepage;
+
 
 /**
  * Class Return3D
@@ -31,12 +37,18 @@ class Return3D extends Action
 
     protected $resultRedirect;
 
+    protected $cartManagement;
+
+    protected $quote;
+
     public function __construct(
         Context $context,
-        JsonFactory    $resultJsonFactory,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
+        JsonFactory $resultJsonFactory,
+        OrderFactory $orderFactory,
         Payfullapi $helper,
-        \Magento\Checkout\Model\Session $checkoutSession,
+        Session $checkoutSession,
+        CartManagementInterface $cartManagement,
+        Quote $quote,
         HistoryFactory $historyFactory
     ) {
         parent::__construct($context);
@@ -45,6 +57,8 @@ class Return3D extends Action
         $this->_orderFactory = $orderFactory;
         $this->checkoutSession = $checkoutSession;
         $this->_historyFactory = $historyFactory;
+        $this->cartManagement = $cartManagement;
+        $this->quote = $quote;
         $this->resultRedirect = $context->getResultFactory();
     }
     /**
@@ -52,6 +66,15 @@ class Return3D extends Action
      */
     public function execute()
     {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+
+        $store = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
+        $store_id = $store->getStore()->getId();
+
+        $this->quote = $this->checkoutSession->getQuote();
+        $this->quote->getPayment()->setMethod('payfull');
+        $this->cartManagement->placeOrder($this->quote->getId());        
+
         $resultRedirect = $this->resultRedirect->create(ResultFactory::TYPE_REDIRECT);
         
         if(isset($_REQUEST['status']) && $_REQUEST['status'] == '1') {
@@ -85,7 +108,7 @@ class Return3D extends Action
                                 }
                                 // break;
                             }elseif($key == 'store_id'){                        
-                                $logdata['store_id']='1';
+                                $logdata['store_id']= $store_id;
                                  // break;
                             }elseif($key == 'transaction_id'){                        
                                 $logdata['transaction_id']=$value;
@@ -125,12 +148,12 @@ class Return3D extends Action
                 }
                 $logdata['client_ip']=$getClientIp;
                 $this->checkoutSession->setPayfulllog($logdata);
-                // echo "<script type='text/javascript'>placeOrder();</script>";
-                $resultRedirect->setPath('checkout/onepage/success');
+                /*echo "<script type='text/javascript'>alert('qqqqq');temp();</script>";*/
+                $resultRedirect->setPath('checkout/onepage/success', ['_secure' => true]);
                 return $resultRedirect;
             }
         }else{
-            $resultRedirect->setPath('checkout/onepage/failure');
+            $resultRedirect->setPath('checkout/onepage/failure', ['_secure' => true]);
             return $resultRedirect;
         }
     }

@@ -11,6 +11,11 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use T4u\Payfull\Helper\Payfullapi;
 use T4u\Payfull\Model\HistoryFactory;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Checkout\Model\Session;
+use Magento\Sales\Model\OrderFactory;
+use Magento\Quote\Model\Quote;
+use Magento\Checkout\Model\Type\Onepage;
 
 /**
  * Class Return3D
@@ -31,12 +36,18 @@ class ReturnBKM extends Action
 
     protected $resultRedirect;
 
+    protected $cartManagement;
+
+    protected $quote;
+
     public function __construct(
         Context $context,
-        JsonFactory    $resultJsonFactory,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
+        JsonFactory $resultJsonFactory,
+        OrderFactory $orderFactory,
         Payfullapi $helper,
-        \Magento\Checkout\Model\Session $checkoutSession,
+        Session $checkoutSession,
+        CartManagementInterface $cartManagement,
+        Quote $quote,
         HistoryFactory $historyFactory
     ) {
         parent::__construct($context);
@@ -45,6 +56,8 @@ class ReturnBKM extends Action
         $this->_orderFactory = $orderFactory;
         $this->checkoutSession = $checkoutSession;
         $this->_historyFactory = $historyFactory;
+        $this->cartManagement = $cartManagement;
+        $this->quote = $quote;
         $this->resultRedirect = $context->getResultFactory();
     }
     /**
@@ -52,6 +65,15 @@ class ReturnBKM extends Action
      */
     public function execute()
     {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+
+        $store = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
+        $store_id = $store->getStore()->getId();
+
+        $this->quote = $this->checkoutSession->getQuote();
+        $this->quote->getPayment()->setMethod('payfull');
+        $this->cartManagement->placeOrder($this->quote->getId());
+
         $resultRedirect = $this->resultRedirect->create(ResultFactory::TYPE_REDIRECT);
         
         if(isset($_REQUEST['status']) && $_REQUEST['status'] == '1'){
@@ -77,61 +99,49 @@ class ReturnBKM extends Action
                                 }else{
                                     $total = $value * $result['conversion_rate'];
                                     $logdata['total'] = round($total);
-                                    /*$logdata['total'] = $result['original_total'];*/
                                     $logdata['total_try']=$value;
                                     $commission_total = $logdata['total'] - $result['original_total'];
                                     $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
                                     $payfull = $this->checkoutSession->getPayfull();
                                     $logdata['commission_total'] = $commission_total;
                                 }
-                                break;
                             }elseif($key == 'store_id'){                        
-                                $logdata['store_id']='1';
-                                 // break;
+                                $logdata['store_id']= $store_id;
                             }elseif($key == 'transaction_id'){                        
                                 $logdata['transaction_id']=$value;
-                                 // break;
                             }elseif($key == 'total_try'){                        
                                 $logdata['total_try']=$value;
-                                 // break;
                             }elseif($key == 'conversion_rate'){                        
                                 $logdata['conversion_rate']=$value;
-                                 // break;
                             }elseif($key == 'bank_id'){                        
                                 $logdata['bank_id']=$value;
-                                 // break;
                             }elseif($key == 'use3d'){ 
                                 if($value == 0){
                                     $logdata['use3d']='No';
                                 }else{
                                     $logdata['use3d']='Yes';
                                 }                       
-                                // break;
                             }elseif($key == 'installments'){                        
                                 $logdata['installments']=$value;
-                                 // break;
                             }elseif($key == 'extra_installments'){                        
                                 $logdata['extra_installments']=$value;
-                                 // break;
                             }elseif($key == 'status'){ 
                                 if($value == 0){
                                     $logdata['status']='Failed';
                                 }else{
                                     $logdata['status']='Complete';
                                 }
-                                // break;
                             }elseif($key == 'time'){                        
                                 $logdata['date_added']=$value;
-                                // break;
                             }
                 }
                 $logdata['client_ip']=$getClientIp;
                 $this->checkoutSession->setPayfulllog($logdata);
             }
-            $resultRedirect->setPath('checkout/onepage/success');
+            $resultRedirect->setPath('checkout/onepage/success', ['_secure' => true]);
             return $resultRedirect;
         }else{
-            $resultRedirect->setPath('checkout/onepage/failure');
+            $resultRedirect->setPath('checkout/onepage/failure', ['_secure' => true]);
             return $resultRedirect;
         }
     }

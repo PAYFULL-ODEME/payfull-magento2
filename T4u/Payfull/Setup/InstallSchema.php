@@ -157,13 +157,6 @@ class InstallSchema implements InstallSchemaInterface
                     'Installments'
                 )
                 ->addColumn(
-                    'extra_installments',
-                    Table::TYPE_SMALLINT,
-                    null,
-                    [],
-                    'Extra Installments'
-                )
-                ->addColumn(
                     'status',
                     Table::TYPE_TEXT,
                     50,
@@ -176,13 +169,6 @@ class InstallSchema implements InstallSchemaInterface
                     50,
                     [],
                     'Date Added'
-                )
-                ->addColumn(
-                    'created_at',
-                    Table::TYPE_TIMESTAMP,
-                    Table::TIMESTAMP_INIT,
-                    [],
-                    'Created At'
                 )
                 ->setOption('type', 'InnoDB')
                 ->setOption('charset', 'utf8');

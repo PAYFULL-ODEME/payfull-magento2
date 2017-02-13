@@ -395,7 +395,7 @@ define(
                                     async : false,
                                     type: 'post',
                                     success: function(result)
-                                    {   
+                                    {  
                                         if(result != null) {
                                             if(result.ErrorCode == 0){
                                                 flag_success = 1;
@@ -405,7 +405,7 @@ define(
                                                 $(".error-message").html('<div class="message message-warning warning"><span>' + result.ErrorMSG + '</span></div>');
                                             }
                                         } else if ( use3D != null && use3D == 1 && result == null){
-                                            flag_success = 1;
+                                            flag_success = 0;
                                             window.location.assign(url_redirect);
                                         } else {
                                             flag_success = 0;    
@@ -440,7 +440,7 @@ define(
                                         $(wrapper).html('<div class="message message-warning warning"><span>' + result.ErrorMSG + '</span></div>');
                                     }
                                 } else if( useBKM != null && useBKM == 1 && result == null){
-                                    flag_success = 1;
+                                    flag_success = 0;
                                     window.location.assign(url_redirect);
                                 } else {
                                     flag_success = 0;
