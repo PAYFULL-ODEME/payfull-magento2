@@ -8,6 +8,9 @@
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="checkout_onepage_controller_success_action">
+        <observer name="payfull_send_mail" instance="T4u\Payfull\Observer\SendMail" />
+    </event>
+    <event name="sales_order_save_before">
         <observer name="payfull_comission_assign" instance="T4u\Payfull\Observer\DataAssignObserver" />
     </event>
     <event name="sales_order_payment_cancel">

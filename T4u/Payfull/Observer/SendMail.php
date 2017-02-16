@@ -10,18 +10,19 @@ use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Framework\ObjectManager\ObjectManager;
 use T4u\Payfull\Model\HistoryFactory;
 use T4u\Payfull\Helper\Payfullapi;
+use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 
-class DataAssignObserver implements \Magento\Framework\Event\ObserverInterface {
+class SendMail implements \Magento\Framework\Event\ObserverInterface {
     /**
      * @var \Magento\Framework\ObjectManager\ObjectManager
     */
-    protected $_objectManager;
-    
+    protected $_objectManager;    
     protected $_orderFactory;    
     protected $_checkoutSession;
-    private $_historyFactory;
+    protected $_historyFactory;
     protected $logger;
-    private $helper;
+    protected $helper;
+    protected $orderSender;
     
     public function __construct(
         \Magento\Checkout\Model\Session $checkoutSession,
@@ -29,6 +30,7 @@ class DataAssignObserver implements \Magento\Framework\Event\ObserverInterface {
         HistoryFactory $historyFactory,
         Payfullapi $helper,
         \Psr\Log\LoggerInterface $logger,
+        OrderSender $orderSender,
         \Magento\Framework\ObjectManager\ObjectManager $objectManager
     ) {        
         $this->_objectManager = $objectManager;        
@@ -36,6 +38,7 @@ class DataAssignObserver implements \Magento\Framework\Event\ObserverInterface {
         $this->_checkoutSession = $checkoutSession;    
         $this->_historyFactory = $historyFactory;
         $this->logger = $logger;
+        $this->orderSender = $orderSender;
         $this->helper = $helper;
     }
     /**
@@ -44,30 +47,22 @@ class DataAssignObserver implements \Magento\Framework\Event\ObserverInterface {
      */
     public function execute(Observer $observer)
     {
-            $order = $observer->getEvent()->getOrder(); 
-    
-            $payfull = $this->_checkoutSession->getPayfull();
-            if(isset($payfull['payfull_commission'])){
-                $commission = $payfull['payfull_commission'];
-                unset($payfull['payfull_commission']);
-                $order->setPayfullCommission($commission);
-            }
-            
+        $orderIds = $observer->getEvent()->getOrderIds(); 
+        if (count($orderIds)) {
+            $orderId = $orderIds[0];            
+            $order = $this->_orderFactory->create()->load($orderId); 
+
             $payfulldata = $this->_checkoutSession->getPayfulllog();
-
-            if($payfulldata['status'] == 'Complete'){
-                $order->setStatus('complete');
-            } else {
-                $order->setStatus('canceled');
+            if($payfulldata['use3d'] == 'Yes' || $payfulldata['bank_id'] == 'BKMExpress' ){
+                try {
+                    $this->orderSender->send($order);
+                } catch (\Exception $e) {
+                    $this->logger->critical($e);
+                }
             }
-
-            $historyModel = $this->_historyFactory->create();
-           
-            if(isset($payfulldata['transaction_id'])){    
-                $orderIncrementId = $order->getIncrementId();
-                $payfulldata['order_id'] = $orderIncrementId;  
-                $historyModel->setData($payfulldata);
-                $historyModel->save();
-            }
+        }
+        if(isset($payfulldata)){
+            unset($payfulldata);
+        }
     }
 }

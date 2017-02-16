@@ -12,6 +12,8 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
 use T4u\Payfull\Helper\Payfullapi;
 use T4u\Payfull\Model\HistoryFactory;
+use Magento\Quote\Model\Quote;
+
 
 /**
  * Class Cardinfo
@@ -26,7 +28,9 @@ class Cardinfo extends Action
 
     private $helper;
 
-    protected $checkoutSession;    
+    protected $checkoutSession;  
+
+    protected $quote;
 
     public function __construct(
         Context $context,
@@ -34,6 +38,7 @@ class Cardinfo extends Action
         \Magento\Sales\Model\OrderFactory $orderFactory,
         Payfullapi $helper,
         HistoryFactory $historyFactory,
+        Quote $quote,
         \Magento\Checkout\Model\Session $checkoutSession
     ) {
         parent::__construct($context);
@@ -41,6 +46,7 @@ class Cardinfo extends Action
         $this->resultJsonFactory = $resultJsonFactory;
         $this->_orderFactory = $orderFactory;
         $this->_historyFactory = $historyFactory;
+        $this->quote = $quote;        
         $this->checkoutSession = $checkoutSession;
     }
     /**
@@ -51,7 +57,7 @@ class Cardinfo extends Action
         if(isset($_POST)){           
             $defaults = $_POST;           
         }
-		$cc_number='';        
+        $cc_number='';        
         if(!isset($_POST['cc_number'])){           
             return false;           
         }
@@ -118,6 +124,9 @@ class Cardinfo extends Action
                             $payfull = $this->checkoutSession->getPayfull();
                             $logdata['commission_total'] = $commission_total;
                         }
+                        /*$this->quote = $this->checkoutSession->getQuote();
+                        $this->quote->setPayfullCommission($logdata['commission_total']);
+                        $this->quote->save();*/
                     }elseif($key == 'store_id'){                        
                         $logdata['store_id'] = $store_id;
                     }elseif($key == 'transaction_id'){                        
