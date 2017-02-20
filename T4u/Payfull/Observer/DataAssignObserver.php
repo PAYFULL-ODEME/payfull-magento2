@@ -60,7 +60,7 @@ class DataAssignObserver implements \Magento\Framework\Event\ObserverInterface {
             } else {
                 $order->setStatus('canceled');
             }
-
+            
             $historyModel = $this->_historyFactory->create();
            
             if(isset($payfulldata['transaction_id'])){    
@@ -69,5 +69,6 @@ class DataAssignObserver implements \Magento\Framework\Event\ObserverInterface {
                 $historyModel->setData($payfulldata);
                 $historyModel->save();
             }
+            unset($payfulldata['status']);
     }
 }

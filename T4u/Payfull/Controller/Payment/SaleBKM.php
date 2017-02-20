@@ -72,6 +72,9 @@ class SaleBKM extends Action
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $storeManager = $objectManager->get('\Magento\Store\Model\StoreManagerInterface');
 
+        $store = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
+        $store_id = $store->getStore()->getId();
+
         $baseUrl = $storeManager->getStore()->getBaseUrl();
         $defaults = array(
             "bank_id"         => 'BKMExpress',
@@ -96,12 +99,6 @@ class SaleBKM extends Action
         $field = array();
         $logdata = array();
 
-        foreach ($collection->getData() as $data ) 
-        {            
-            $field = array_keys($data);
-            
-            break;
-        }
         $this->result = $this->helper->bindCurl($params, $password, $api_url);
 
         $this->result = json_decode($this->result);
@@ -111,6 +108,56 @@ class SaleBKM extends Action
                 'html'=>$this->result
             ]);
         } else if (isset($this->result) && is_object($this->result)) {
+
+            foreach ($this->result as $key => $value) {
+
+                if($key == 'total'){
+                    if($this->result->original_currency == $this->result->currency){
+                        $logdata['total']=$value;
+                        $logdata['total_try']=$value;
+                        $commission_total = $value - $grandTotal;
+                        $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
+                        $payfull = $this->checkoutSession->getPayfull();
+                        $logdata['commission_total'] = $commission_total;
+                    }else{
+                        $total = $value * $this->result->conversion_rate;
+                        $logdata['total'] = round($total, 1);
+                        $logdata['total_try']=$value;
+                        $commission_total = $logdata['total'] - $grandTotal;
+                        $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
+                        $payfull = $this->checkoutSession->getPayfull();
+                        $logdata['commission_total'] = $commission_total;
+                    }
+                }elseif($key == 'transaction_id'){                        
+                    $logdata['transaction_id']=$value;
+                }elseif($key == 'total_try'){                        
+                    $logdata['total_try']=$value;
+                }elseif($key == 'conversion_rate'){                        
+                    $logdata['conversion_rate']=$value;
+                }elseif($key == 'bank_id'){                        
+                    $logdata['bank_id']=$value;
+                }elseif($key == 'use3d'){ 
+                    if($value == 0){
+                        $logdata['use3d']='No';
+                    }else{
+                        $logdata['use3d']='Yes';
+                    }                       
+                }elseif($key == 'installments'){                        
+                    $logdata['installments']=$value;
+                }elseif($key == 'status'){ 
+                    if($value == 0){
+                        $logdata['status']='Failed';
+                    }else{
+                        $logdata['status']='Complete';
+                    }
+                }elseif($key == 'time'){                        
+                    $logdata['date_added']=$value;
+                }
+            }
+            $logdata['store_id'] = $store_id;
+            $logdata['client_ip']=$getClientIp;
+            $logdata['mail_send'] = 1;
+            $this->checkoutSession->setPayfulllog($logdata);
             return $resultj->setData($this->result);
         }
     }

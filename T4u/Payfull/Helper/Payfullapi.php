@@ -9,6 +9,8 @@ use Magento\Directory\Model\ResourceModel\Country\CollectionFactory;
 use Magento\Framework\Encryption\Encryptor;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Framework\App\RequestInterface;
+use Magento\Checkout\Model\Session;
+
 /**
  * Class Country
  */
@@ -51,6 +53,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
 
     public $baseUrl;
 
+    protected $checkoutSession;
     /**
      * @var Repository
      */
@@ -71,6 +74,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\Encryption\Encryptor $crypt,
         RequestInterface $request,
+        Session $checkoutSession,
         Repository $assetRepository
     ) {
         $this->collectionFactory = $factory;
@@ -78,6 +82,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_scopeConfig = $scopeConfig;   
         $this->_crypt = $crypt;
         $this->request = $request;
+        $this->checkoutSession = $checkoutSession;
         $this->assetRepository = $assetRepository;
     }
     
@@ -201,6 +206,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
                 if(isset($responseList)){
                     foreach ($responseList->data as $index) {               
                         if($index->bank == $response->data->bank_id){
+                            $this->checkoutSession->setInstallmentInfo($index->installments);
                             $this->installment = count($index->installments)-1;
                             $this->bankId = $response->data->bank_id;
                             $this->gateway = $index->gateway;           

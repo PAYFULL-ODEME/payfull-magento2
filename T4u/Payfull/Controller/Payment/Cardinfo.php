@@ -107,57 +107,57 @@ class Cardinfo extends Action
             
             foreach ($this->result as $key => $value) {
 
-                    if($key == 'total'){
-                        if($this->result->original_currency == $this->result->currency){
-                            $logdata['total']=$value;
-                            $logdata['total_try']=$value;
-                            $commission_total = $value - $grandTotal;
-                            $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
-                            $payfull = $this->checkoutSession->getPayfull();
-                            $logdata['commission_total'] = $commission_total;
-                        }else{
-                            $total = $value * $this->result->conversion_rate;
-                            $logdata['total'] = round($total, 2);
-                            $logdata['total_try']=$value;
-                            $commission_total = $logdata['total'] - $grandTotal;
-                            $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
-                            $payfull = $this->checkoutSession->getPayfull();
-                            $logdata['commission_total'] = $commission_total;
-                        }
-                        /*$this->quote = $this->checkoutSession->getQuote();
-                        $this->quote->setPayfullCommission($logdata['commission_total']);
-                        $this->quote->save();*/
-                    }elseif($key == 'store_id'){                        
-                        $logdata['store_id'] = $store_id;
-                    }elseif($key == 'transaction_id'){                        
-                        $logdata['transaction_id']=$value;
-                    }elseif($key == 'total_try'){                        
+                if($key == 'total'){
+                    if($this->result->original_currency == $this->result->currency){
+                        $logdata['total']=$value;
                         $logdata['total_try']=$value;
-                    }elseif($key == 'conversion_rate'){                        
-                        $logdata['conversion_rate']=$value;
-                    }elseif($key == 'bank_id'){                        
-                        $logdata['bank_id']=$value;
-                    }elseif($key == 'use3d'){ 
-                        if($value == 0){
-                            $logdata['use3d']='No';
-                        }else{
-                            $logdata['use3d']='Yes';
-                        }                       
-                    }elseif($key == 'installments'){                        
-                        $logdata['installments']=$value;
-                    }elseif($key == 'extra_installments'){                        
-                        $logdata['extra_installments']=$value;
-                    }elseif($key == 'status'){ 
-                        if($value == 0){
-                            $logdata['status']='Failed';
-                        }else{
-                            $logdata['status']='Complete';
-                        }
-                    }elseif($key == 'time'){                        
-                        $logdata['date_added']=$value;
+                        $commission_total = $value - $grandTotal;
+                        $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
+                        $payfull = $this->checkoutSession->getPayfull();
+                        $logdata['commission_total'] = $commission_total;
+                    }else{
+                        $total = $value * $this->result->conversion_rate;
+                        $logdata['total'] = round($total, 1);
+                        $logdata['total_try']=$value;
+                        $commission_total = $logdata['total'] - $grandTotal;
+                        $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
+                        $payfull = $this->checkoutSession->getPayfull();
+                        $logdata['commission_total'] = $commission_total;
                     }
+                    /*
+                        Insert code to enter commission into quote table
+                    */
+                    /*$this->quote = $this->checkoutSession->getQuote();
+                    $this->quote->setPayfullCommission($logdata['commission_total']);
+                    $this->quote->save();*/
+                }elseif($key == 'transaction_id'){                        
+                    $logdata['transaction_id']=$value;
+                }elseif($key == 'total_try'){                        
+                    $logdata['total_try']=$value;
+                }elseif($key == 'conversion_rate'){                        
+                    $logdata['conversion_rate']=$value;
+                }elseif($key == 'bank_id'){                        
+                    $logdata['bank_id']=$value;
+                }elseif($key == 'use3d'){ 
+                    if($value == 0){
+                        $logdata['use3d']='No';
+                    }else{
+                        $logdata['use3d']='Yes';
+                    }                       
+                }elseif($key == 'installments'){                        
+                    $logdata['installments']=$value;
+                }elseif($key == 'status'){ 
+                    if($value == 0){
+                        $logdata['status']='Failed';
+                    }else{
+                        $logdata['status']='Complete';
+                    }
+                }elseif($key == 'time'){                        
+                    $logdata['date_added']=$value;
+                }
             }
             $logdata['client_ip']=$getClientIp;
+            $logdata['store_id'] = $store_id;
             $this->checkoutSession->setPayfulllog($logdata);
             return $resultj->setData($this->result);
         }

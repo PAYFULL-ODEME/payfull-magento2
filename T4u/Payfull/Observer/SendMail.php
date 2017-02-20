@@ -53,7 +53,7 @@ class SendMail implements \Magento\Framework\Event\ObserverInterface {
             $order = $this->_orderFactory->create()->load($orderId); 
 
             $payfulldata = $this->_checkoutSession->getPayfulllog();
-            if($payfulldata['use3d'] == 'Yes' || $payfulldata['bank_id'] == 'BKMExpress' ){
+            if($payfulldata['use3d'] == 'Yes' || ($payfulldata['bank_id'] == 'BKMExpress' && $payfulldata['mail_send'] != '1') ){
                 try {
                     $this->orderSender->send($order);
                 } catch (\Exception $e) {
@@ -64,5 +64,8 @@ class SendMail implements \Magento\Framework\Event\ObserverInterface {
         if(isset($payfulldata)){
             unset($payfulldata);
         }
+        /*if(isset($this->_checkoutSession)){
+            unset($this->_checkoutSession);
+        }*/
     }
 }

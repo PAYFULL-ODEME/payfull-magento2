@@ -44,7 +44,7 @@ define(
         var installment = 1;
         var baseinstallment=1;
         var flag = 0;
-        var flag_success = 1;
+        var flag_success = 0;
         var cc_bin_length = '';
         var cc_bin = '';
         var cc_first = '';
@@ -433,6 +433,7 @@ define(
                                 if(result != null){
                                     flag_success = 0;
                                     if(result.ErrorCode == 0){
+                                        flag_success = 1;
                                         var wrapper = $(".error-message-bkm");                                    
                                         $(wrapper).html('');
                                     } else {
