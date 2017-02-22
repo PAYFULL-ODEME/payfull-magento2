@@ -99,20 +99,13 @@ class ReturnBKM extends Action
                             $payfull = $this->checkoutSession->getPayfull();
                             $logdata['commission_total'] = $commission_total;
                         }else{
-                            $installments = $this->checkoutSession->getInstallmentInfo();
-                            foreach ($installments as $index => $commission) {
-                                if($result['installments'] == ++$index){
-                                    $total = $result['original_total'];
-                                    $percent = filter_var($commission->commission, FILTER_SANITIZE_NUMBER_INT);
-                                    $total += (($total * $percent) / 100); 
-                                }
-                            }
-                            $logdata['total']=$total;
+                            $total = $value * $result['conversion_rate'];
+                            $logdata['total'] = round($total, 1);
                             $logdata['total_try']=$value;
-                            $commission_total = $total - $result['original_total'];
+                            $commission_total = $logdata['total'] - $grandTotal;
                             $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
                             $payfull = $this->checkoutSession->getPayfull();
-                            $logdata['commission_total'] = $commission_total;
+                            $logdata['commission_total'] = $commission_total;                            
                         }
                     }elseif($key == 'transaction_id'){                        
                         $logdata['transaction_id']=$value;

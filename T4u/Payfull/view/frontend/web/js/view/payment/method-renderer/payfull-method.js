@@ -172,16 +172,11 @@ define(
                             $('#bankImage').attr('src','');
                             var html = '' ;
                             var wrapper = $(".installment_row"); /*Fields wrapper*/
-                            if(result == null || result.installments == null){
+
+                            if(result == null){
                                 var grandtotal_null = priceUtils.formatPrice(grandtotal, quote.getPriceFormat());
                                 /*some this wrong with api*/
-                                if(result != null){ 
-                                    if(result.bankImageUrl != null && result.bankImageUrl != undefined){
-                                        $('#bankImage').attr('src',result.bankImageUrl);
-                                    }else{
-                                        $('#bankImage').attr('src','');
-                                    } 
-                                }
+                                
                                 html += '<div class="install_body_label installment_radio"><input rel="1" class="installment_radio" id="installment_radio" checked="" name="installments" value="1" type="radio"></div>';
                                 html += '<div class="install_body_label installment_lable_code"><span data-bind="text: installment">One Shot</span></div>';
                                 html +='<div class="install_body_label">';
@@ -199,9 +194,24 @@ define(
                                     }                                    
                                 }/*end if*/
                             }else{
-                                bank_id = result.bank;
-                                gateway = result.gateway;                                        
-                            
+                                if(result.installments == null){
+                                    if(result.bankImageUrl != null && result.bankImageUrl != undefined){
+                                        $('#bankImage').attr('src',result.bankImageUrl);
+                                    }else{
+                                        $('#bankImage').attr('src','');
+                                    } 
+                                }
+
+                                if(result.data.bank_id != null || result.data.bank_id != undefined){
+                                    bank_id = result.data.bank_id;
+                                } else {
+                                    bank_id = result.bank;
+                                }
+
+                                if(result.gateway != null || result.gateway != undefined){
+                                    gateway = result.gateway;
+                                } 
+                                                            
                                 if(grandtotal >= min_order){
                                     installment_count = 0;
                                     if(result.bankImageUrl != null && result.bankImageUrl != undefined){
@@ -380,13 +390,23 @@ define(
                             var expiry_year = this.validateCardExpiryYear(cc_year);                   
                             var permonth =$('#per_month'+baseinstallment).attr('rel');
                             var totalInstallamt =$('#total'+baseinstallment).attr('rel');
-                            if(campaign_id_set == 0 || campaign_id_set == null || campaign_id_set == undefined){
-                                var data= {installments:installment, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
-                                customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
-                            }else{
-                                var data= {installments:installment, campaign_id:campaign_id_set, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
-                                customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
-                            }    
+                            if(gateway == '' ||gateway == null || gateway == undefined){
+                                if(campaign_id_set == 0 || campaign_id_set == null || campaign_id_set == undefined){
+                                    var data= {installments:installment, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
+                                    customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id}
+                                }else{
+                                    var data= {installments:installment, campaign_id:campaign_id_set, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
+                                    customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id}
+                                }   
+                            } else {
+                                if(campaign_id_set == 0 || campaign_id_set == null || campaign_id_set == undefined){
+                                    var data= {installments:installment, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
+                                    customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
+                                }else{
+                                    var data= {installments:installment, campaign_id:campaign_id_set, total:grandtotal, cc_name:cc_name, cc_number:cc_number, cc_month:cc_month, cc_year:cc_year, cc_cvc:cc_cvc, use3d:use3D,
+                                    customer_firstname:firstname, customer_lastname:lastname, customer_email:email, customer_phone:phone, bank_id:bank_id, gateway:gateway}
+                                }                                   
+                            }
                             if(cc_length == 16 && expiry_month == true && expiry_year == true){
                                 $.ajax({
                                     dataType: 'json',
