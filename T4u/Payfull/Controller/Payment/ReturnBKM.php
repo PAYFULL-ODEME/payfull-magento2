@@ -102,7 +102,7 @@ class ReturnBKM extends Action
                             $total = $value * $result['conversion_rate'];
                             $logdata['total'] = round($total, 1);
                             $logdata['total_try']=$value;
-                            $commission_total = $logdata['total'] - $grandTotal;
+                            $commission_total = $logdata['total'] - $result['original_total'];
                             $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
                             $payfull = $this->checkoutSession->getPayfull();
                             $logdata['commission_total'] = $commission_total;                            
