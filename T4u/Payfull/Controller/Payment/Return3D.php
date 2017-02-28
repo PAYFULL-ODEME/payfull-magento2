@@ -70,14 +70,10 @@ class Return3D extends Action
         
         $store = $objectManager->get('Magento\Store\Model\StoreManagerInterface');
         $store_id = $store->getStore()->getId();
-        $this->quote->setCheckoutMethod(Onepage::METHOD_CUSTOMER);
+
         $this->quote = $this->checkoutSession->getQuote();
         $this->quote->getPayment()->setMethod('payfull');
 
-        /*$order = $objectManager->create('Magento\Sales\Model\Order')->load(105);
-        $objectManager->create('\Magento\Sales\Model\OrderNotifier')
-                      ->notify($order);
-*/
         $resultRedirect = $this->resultRedirect->create(ResultFactory::TYPE_REDIRECT);
         
         if(isset($_REQUEST['status']) && $_REQUEST['status'] == '1') {
@@ -89,6 +85,7 @@ class Return3D extends Action
             $historyModel = $this->_historyFactory->create();
             $collection = $historyModel->getCollection();        
             /*add in if last -> && $result->status === true*/
+
             if(isset($result)) {
                 foreach ($result as $key => $value) {
                     if($key == 'total'){
@@ -97,22 +94,25 @@ class Return3D extends Action
                             $logdata['total_try']=$value;
                             $commission_total = $value - $result['original_total'];
                             $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
-                            $payfull = $this->checkoutSession->getPayfull();
+                            // $payfull = $this->checkoutSession->getPayfull();
                             $logdata['commission_total'] = $commission_total;
                         }else{
+                            $total = $result['original_total'];                            
                             $installments = $this->checkoutSession->getInstallmentInfo();
-                            foreach ($installments as $index => $commission) {
-                                if($result['installments'] == ++$index){
-                                    $total = $result['original_total'];
-                                    $percent = filter_var($commission->commission, FILTER_SANITIZE_NUMBER_INT);
-                                    $total += (($total * $percent) / 100); 
+                            if($installments)
+                            {
+                                foreach ($installments as $index => $commission) {
+                                    if($result['installments'] == ++$index){
+                                        $percent = filter_var($commission->commission, FILTER_SANITIZE_NUMBER_INT);
+                                        $total += (($total * $percent) / 100); 
+                                    }
                                 }
                             }
                             $logdata['total']=$total;
                             $logdata['total_try']=$value;
                             $commission_total = $total - $result['original_total'];
                             $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
-                            $payfull = $this->checkoutSession->getPayfull();
+                            // $payfull = $this->checkoutSession->getPayfull();
                             $logdata['commission_total'] = $commission_total;  
                         }
                     }elseif($key == 'transaction_id'){                        
@@ -146,11 +146,13 @@ class Return3D extends Action
                 $logdata['client_ip']=$getClientIp;
                 $logdata['store_id'] = $store_id;
                 $this->checkoutSession->setPayfulllog($logdata);
-                $this->cartManagement->placeOrder($this->quote->getId());        
-                $resultRedirect->setPath('checkout/onepage/success', ['_secure' => true]);
-                return $resultRedirect;
+                $this->cartManagement->placeOrder($this->quote->getId());
             }
+            $resultRedirect->setPath('checkout/onepage/success', ['_secure' => true]);
+            return $resultRedirect;
         }else{
+            $logdata['status']='Failed';
+            $this->checkoutSession->setPayfulllog($logdata);
             $resultRedirect->setPath('checkout/onepage/failure', ['_secure' => true]);
             return $resultRedirect;
         }

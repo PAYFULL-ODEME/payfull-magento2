@@ -72,11 +72,8 @@ class ReturnBKM extends Action
 
         $this->quote = $this->checkoutSession->getQuote();
         $this->quote->getPayment()->setMethod('payfull');
-        $this->cartManagement->placeOrder($this->quote->getId());
 
         $resultRedirect = $this->resultRedirect->create(ResultFactory::TYPE_REDIRECT);
-
-        // var_dump($_REQUEST);exit;
         
         if(isset($_REQUEST['status']) && $_REQUEST['status'] == '1'){
             $result = $_REQUEST;
@@ -137,6 +134,7 @@ class ReturnBKM extends Action
                 $logdata['client_ip']=$getClientIp;
                 $logdata['mail_send'] = 0;
                 $this->checkoutSession->setPayfulllog($logdata);
+                $this->cartManagement->placeOrder($this->quote->getId());
             }
             $resultRedirect->setPath('checkout/onepage/success', ['_secure' => true]);
             return $resultRedirect;

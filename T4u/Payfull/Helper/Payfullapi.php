@@ -186,8 +186,8 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         $getMinOrderTotal = $this->getMinOrderTotal();
 
         $response = json_decode($response);
-        $this->bankId = $response->data->bank_id;
         if(isset($response) && $response->data->bank_id != ''){
+            $this->bankId = $response->data->bank_id;
             $bankName = $response->data->bank_id;
             $param = array('_secure' => $this->request->isSecure());
             $bankImageUrl = array();

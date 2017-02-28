@@ -61,11 +61,8 @@ class SendMail implements \Magento\Framework\Event\ObserverInterface {
                 }
             }
         }
-        if(isset($payfulldata)){
-            unset($payfulldata);
-        }
-        /*if(isset($this->_checkoutSession)){
+        if($this->_checkoutSession){
             unset($this->_checkoutSession);
-        }*/
+        }
     }
 }
