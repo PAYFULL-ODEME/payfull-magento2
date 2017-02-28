@@ -153,6 +153,7 @@ class Return3D extends Action
         }else{
             $logdata['status']='Failed';
             $this->checkoutSession->setPayfulllog($logdata);
+            $this->cartManagement->placeOrder($this->quote->getId());
             $resultRedirect->setPath('checkout/onepage/failure', ['_secure' => true]);
             return $resultRedirect;
         }

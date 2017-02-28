@@ -117,7 +117,7 @@ class Cardinfo extends Action
                         $logdata['commission_total'] = $commission_total;
                     }else{
                         $total = $value * $this->result->conversion_rate;
-                        $logdata['total'] = round($total, 1);
+                        $logdata['total'] = round($total, 2);
                         $logdata['total_try']=$value;
                         $commission_total = $logdata['total'] - $grandTotal;
                         $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
