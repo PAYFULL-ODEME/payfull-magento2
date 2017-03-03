@@ -75,7 +75,7 @@ class ReturnBKM extends Action
 
         $resultRedirect = $this->resultRedirect->create(ResultFactory::TYPE_REDIRECT);
         
-        if(isset($_REQUEST['status']) && $_REQUEST['status'] == '1'){
+        if(isset($_REQUEST['status'])){
             $result = $_REQUEST;
             
             $resultj = $this->resultJsonFactory->create();
@@ -136,13 +136,11 @@ class ReturnBKM extends Action
                 $this->checkoutSession->setPayfulllog($logdata);
                 $this->cartManagement->placeOrder($this->quote->getId());
             }
-            $resultRedirect->setPath('checkout/onepage/success', ['_secure' => true]);
-            return $resultRedirect;
-        }else{
-            $logdata['status']='Failed';
-            $this->checkoutSession->setPayfulllog($logdata);
-            $this->cartManagement->placeOrder($this->quote->getId());
-            $resultRedirect->setPath('checkout/onepage/failure', ['_secure' => true]);
+            if ( $logdata['status'] == 'Failed' ){
+                $resultRedirect->setPath('checkout/onepage/failure', ['_secure' => true]);
+            } else {
+                $resultRedirect->setPath('checkout/onepage/success', ['_secure' => true]);                
+            }
             return $resultRedirect;
         }
     }

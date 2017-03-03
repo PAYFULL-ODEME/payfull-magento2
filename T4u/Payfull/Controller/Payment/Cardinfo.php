@@ -95,9 +95,8 @@ class Cardinfo extends Action
         $collection = $historyModel->getCollection();        
         $logdata = array();
 
-        //  add in if last -> && $this->result->status === true
-        /*if(is_object($this->result))*/
-        // response in html when we use 3D_Secure
+        /*response in html when we use 3D_Secure*/
+        
         if (is_string($this->result) && strpos($this->result, '<html')) {
             $this->checkoutSession->setPayfull([
                 'secure'=>true,
@@ -124,12 +123,6 @@ class Cardinfo extends Action
                         $payfull = $this->checkoutSession->getPayfull();
                         $logdata['commission_total'] = $commission_total;
                     }
-                    /*
-                        Insert code to enter commission into quote table
-                    */
-                    /*$this->quote = $this->checkoutSession->getQuote();
-                    $this->quote->setPayfullCommission($logdata['commission_total']);
-                    $this->quote->save();*/
                 }elseif($key == 'transaction_id'){                        
                     $logdata['transaction_id']=$value;
                 }elseif($key == 'total_try'){                        

@@ -204,15 +204,4 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         return $this->getUrl('payfull/*/grid', ['_current' => true]);
     }
 
-    /**
-     * @param \T4u\Payfull\Model\Payfullhistory|\Magento\Framework\Object $row
-     * @return string
-     */
-    public function getRowUrl($row)
-    {
-        return $this->getUrl(
-            'payfull/*/edit',
-            ['id' => $row->getId()]
-        );
-    }
 }

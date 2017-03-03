@@ -334,21 +334,16 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         
         $getClientIp = $this->getClientIp();
         $language = $this->getLanguage();
+        $paymenTitle = $this->getPaymentTitle();
+
         $params = array(
             "merchant"        => $apiUname,
             "type"            => 'Sale',
             "currency"        => $this->currencyCode,
             "language"        => $language,
             "client_ip"       => $getClientIp,
-            "payment_title"   => 'test payment title',
-            "customer_firstname" => 'Mohammad',
-            "customer_lastname"  => 'Alabed',
-			"customer_email"     => 'mohmmadalabed@gmail.com',
-			"customer_phone"     => '265656565',
-            "customer_tc"        => '12590326514'
-            /*,
-            "passive_data"  => '####aaaa',       */     
-         );
+            "payment_title"   => $paymenTitle
+        );
         if(isset($defaults['use3d']) && $defaults['use3d'] == 1){
             $extraParam = array(
                 "return_url"      => $this->baseUrl.'payfull/payment/Return3D' 
@@ -365,6 +360,15 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
             }    
         $params = array_merge($defaults, $params);
         return $params;     
+    }
+
+    /**
+     * Returns config value
+     *
+     * @return string
+     */
+    public function getPaymentTitle(){
+        return $this->_scopeConfig->getValue('payment/payfull/title');
     }
 
     /**

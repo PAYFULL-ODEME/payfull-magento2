@@ -61,7 +61,6 @@ class Payment extends \Magento\Payment\Model\Method\AbstractMethod
 
         //  add in if last -> && $result->status === true
         if(isset($result)) {
-            echo "enter";
             foreach ($result as $key => $value) {
                 foreach ($field as $keys) 
                 {
