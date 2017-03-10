@@ -89,6 +89,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
     public function bindCurl($params, $merchantPassword, $api_url)
     {       
         //begin HASH calculation
+        
         ksort($params);
         $hashString = "";
         foreach ($params as $key=>$val) {
@@ -112,6 +113,8 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
         $curlerrcode = curl_errno($ch);
         $curlerr = curl_error($ch);
         /* Check response is json or html */
+
+        // var
         if(is_string($response) && strpos($response, '<html')) {
             return json_encode($response);            
         }else{
@@ -146,8 +149,7 @@ class Payfullapi extends \Magento\Framework\App\Helper\AbstractHelper
             "client_ip"       => $getClientIp
          );
         $params = array_merge($params, $defaults);
-        $response = $this->helper->bindCurl($params, $password, $api_url);
-
+        $response = $this->bindCurl($params, $password, $api_url);
         return $response; 
     }
 

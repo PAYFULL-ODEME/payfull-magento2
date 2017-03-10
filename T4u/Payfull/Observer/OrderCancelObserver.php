@@ -46,24 +46,21 @@ class OrderCancelObserver implements \Magento\Framework\Event\ObserverInterface 
      */
     public function execute(Observer $observer)
     {
-        $order = $observer->getEvent()->getPayment()->getData();
-        $orderId =  $order['entity_id'];
+        $order = $observer->getEvent()->getPayment()->getOrder();
+        $orderId =  $order->getIncrementId();
+
+        $difference = ($orderId - 1);
+
+        $orderId = str_pad($difference, strlen($orderId), "0", STR_PAD_LEFT);
+        
         if ($orderId) {      
-/*            $order = $this->_orderFactory->create()->load($orderId); 
-            $orderIncrementId = $order->getIncrementId();
-*/            $collection = $this->mymodulemodelFactory->create()->getCollection()
-                            ->addFieldToFilter('order_id',$orderId);
+            $collection = $this->mymodulemodelFactory->create()->getCollection()
+                               ->addFieldToFilter('order_id',$orderId);
             $collection = $collection->getColumnValues('transaction_id');
             $transaction_id = $collection[0];
             if($transaction_id){
-/*                $order = $this->_orderFactory->create()->load($orderId); 
-                $payfull = $this->_checkoutSession->getPayfull();
-                $commission = $payfull['payfull_commission'];
-                $order->setPayfullCommission($commission);
-                $order->save();
-*/                $defaults = array("type"         => 'Cancel',
-                                  "transaction_id"  => $transaction_id,
-                                  "passive_data"  => '');
+                $defaults = array("type"         => 'Cancel',
+                                  "transaction_id"  => $transaction_id);
                 $response = $this->helper->orderCancelRefund($defaults);
                 var_dump($response);exit;
             }

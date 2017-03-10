@@ -44,13 +44,15 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
      */
     protected function _construct()
     {
-        parent::_construct();
+        
         $this->setId('postGrid');
         $this->setDefaultSort('id');
         $this->setDefaultDir('DESC');
-        $this->setSaveParametersInSession(true);
-        $this->setUseAjax(true);
-        $this->setVarNameFilter('post_filter');
+        $this->setSaveParametersInSession(true);        
+        parent::_construct();
+        if ($this->hasData('default_filter')) {
+            $this->setDefaultFilter($this->getData('default_filter'));
+        }
     }
 
     /**
@@ -195,13 +197,12 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         return parent::_prepareColumns();
     }
 
-    
     /**
      * @return string
      */
     public function getGridUrl()
     {
-        return $this->getUrl('payfull/*/grid', ['_current' => true]);
+        return $this->getUrl('payfull/*/index', ['_current' => true]);
     }
-
+   
 }

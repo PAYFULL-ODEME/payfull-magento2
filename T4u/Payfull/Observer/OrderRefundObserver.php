@@ -22,7 +22,7 @@ class OrderRefundObserver implements \Magento\Framework\Event\ObserverInterface 
     protected $_orderFactory;    
     protected $_checkoutSession;
     protected $logger;
-    protected $mymodulemodelFactory;
+    protected $_mymodulemodelFactory;
     public function __construct(
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Sales\Model\OrderFactory $orderFactory,
@@ -38,7 +38,7 @@ class OrderRefundObserver implements \Magento\Framework\Event\ObserverInterface 
         $this->logger = $logger;
         $this->_scopeConfig = $scopeConfig;           
         $this->helper = $helper;
-        $this->mymodulemodelFactory = $mymodulemodelFactory;
+        $this->_mymodulemodelFactory = $mymodulemodelFactory;
     }
     /**
      * @param Observer $observer
@@ -46,28 +46,29 @@ class OrderRefundObserver implements \Magento\Framework\Event\ObserverInterface 
      */
     public function execute(Observer $observer)
     {
-        $order = $observer->getEvent()->getPayment()->getData();
-        $orderId =  $order['entity_id'];
-        if ($orderId) {      
-/*            $order = $this->_orderFactory->create()->load($orderId); 
-            $orderIncrementId = $order->getIncrementId();
-*/            $collection = $this->mymodulemodelFactory->create()->getCollection()
-                            ->addFieldToFilter('order_id',$orderId);
+        $order = $observer->getEvent()->getCreditmemo()->getOrder(); 
+
+        $orderId =  $order->getIncrementId();
+
+        $baseGrandTotal = $order->getBaseGrandTotal();
+
+        $difference = ($orderId - 1);
+
+        $orderId = str_pad($difference, strlen($orderId), "0", STR_PAD_LEFT);
+
+        if ($orderId) {  
+
+            $collection = $this->_mymodulemodelFactory->create()->getCollection() 
+                               ->addFieldToFilter('order_id', $orderId);
             $collection = $collection->getColumnValues('transaction_id');
             $transaction_id = $collection[0];
+
             if($transaction_id){
-                // $order = $this->_orderFactory->create()->load($orderId); 
-                // $payfull = $this->_checkoutSession->getPayfull();
-                // $commission = $payfull['payfull_commission'];
-                // $order->setPayfullCommission($commission);
-               // $order->save();
                 $defaults = array("type"         => 'Return',
                                   "transaction_id"  => $transaction_id,
-                                  'total' => '23.02',
-                                  "passive_data"  => '');
-                // var_dump($defaults);exit;
-                $response = $this->helper->cancelOrder($defaults);
-                /*var_dump($response);exit;*/
+                                  'total' => $baseGrandTotal);
+                $response = $this->helper->orderCancelRefund($defaults);
+                var_dump($response);exit;
             }
         }
     }
