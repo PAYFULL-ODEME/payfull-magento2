@@ -49,10 +49,6 @@ class OrderCancelObserver implements \Magento\Framework\Event\ObserverInterface 
         $order = $observer->getEvent()->getPayment()->getOrder();
         $orderId =  $order->getIncrementId();
 
-        $difference = ($orderId - 1);
-
-        $orderId = str_pad($difference, strlen($orderId), "0", STR_PAD_LEFT);
-        
         if ($orderId) {      
             $collection = $this->mymodulemodelFactory->create()->getCollection()
                                ->addFieldToFilter('order_id',$orderId);
@@ -62,7 +58,7 @@ class OrderCancelObserver implements \Magento\Framework\Event\ObserverInterface 
                 $defaults = array("type"         => 'Cancel',
                                   "transaction_id"  => $transaction_id);
                 $response = $this->helper->orderCancelRefund($defaults);
-                var_dump($response);exit;
+                /*var_dump($response);exit;*/
             }
         }
     }

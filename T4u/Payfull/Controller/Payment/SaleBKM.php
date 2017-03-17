@@ -119,7 +119,7 @@ class SaleBKM extends Action
                         $this->checkoutSession->setPayfull(['payfull_commission'=>$commission_total]);
                         $payfull = $this->checkoutSession->getPayfull();
                         $logdata['commission_total'] = $commission_total;
-                    }else{
+                    } else {
                         $total = $value * $this->result->conversion_rate;
                         $logdata['total'] = round($total, 1);
                         $logdata['total_try']=$value;

@@ -46,30 +46,37 @@ class OrderRefundObserver implements \Magento\Framework\Event\ObserverInterface 
      */
     public function execute(Observer $observer)
     {
-        $order = $observer->getEvent()->getCreditmemo()->getOrder(); 
+        $paymentMethod = $observer->getEvent()->getPayment()->getMethod();
 
-        $orderId =  $order->getIncrementId();
+        if($paymentMethod == 'payfull') 
+        {
 
-        $baseGrandTotal = $order->getBaseGrandTotal();
+            $order = $observer->getEvent()->getCreditmemo()->getOrder(); 
 
-        $difference = ($orderId - 1);
+            $orderId =  $order->getIncrementId();
 
-        $orderId = str_pad($difference, strlen($orderId), "0", STR_PAD_LEFT);
+            $baseGrandTotal = $order->getBaseGrandTotal();
 
-        if ($orderId) {  
+            $difference = ($orderId - 1);
 
-            $collection = $this->_mymodulemodelFactory->create()->getCollection() 
-                               ->addFieldToFilter('order_id', $orderId);
-            $collection = $collection->getColumnValues('transaction_id');
-            $transaction_id = $collection[0];
+            $orderId = str_pad($difference, strlen($orderId), "0", STR_PAD_LEFT);
 
-            if($transaction_id){
-                $defaults = array("type"         => 'Return',
-                                  "transaction_id"  => $transaction_id,
-                                  'total' => $baseGrandTotal);
-                $response = $this->helper->orderCancelRefund($defaults);
-                var_dump($response);exit;
+            if ($orderId) {  
+
+                $collection = $this->_mymodulemodelFactory->create()->getCollection() 
+                                   ->addFieldToFilter('order_id', $orderId);
+                $collection = $collection->getColumnValues('transaction_id');
+                $transaction_id = $collection[0];
+
+                if($transaction_id){
+                    $defaults = array("type"         => 'Return',
+                                      "transaction_id"  => $transaction_id,
+                                      'total' => $baseGrandTotal);
+                    $response = $this->helper->orderCancelRefund($defaults);
+                    /*var_dump($response);exit;*/
+                }
             }
         }
+        return true;
     }
 }
