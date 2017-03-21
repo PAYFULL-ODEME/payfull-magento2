@@ -172,11 +172,10 @@ define(
                             $('#bankImage').attr('src','');
                             var html = '' ;
                             var wrapper = $(".installment_row"); /*Fields wrapper*/
-
-                            if(result == null){
+                            if(result == null || result.installments == null || result.installments == undefined){
                                 var grandtotal_null = priceUtils.formatPrice(grandtotal, quote.getPriceFormat());
                                 /*some this wrong with api*/
-                                
+            
                                 html += '<div class="install_body_label installment_radio"><input rel="1" class="installment_radio" id="installment_radio" checked="" name="installments" value="1" type="radio"></div>';
                                 html += '<div class="install_body_label installment_lable_code"><span data-bind="text: installment">One Shot</span></div>';
                                 html +='<div class="install_body_label">';
@@ -193,6 +192,11 @@ define(
                                         $('.payfull-checkbox').hide(); 
                                     }                                    
                                 }/*end if*/
+                                if(result.bankImageUrl != null && result.bankImageUrl != undefined){
+                                    $('#bankImage').attr('src',result.bankImageUrl);
+                                }else{
+                                    $('#bankImage').attr('src','');
+                                } 
                             }else{
                                 if(result.installments == null){
                                     if(result.bankImageUrl != null && result.bankImageUrl != undefined){
