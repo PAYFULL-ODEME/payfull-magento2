@@ -42,7 +42,7 @@ On the next step, we might specify gateway domain configuration in [config.xml](
 
 In a case of Payment Gateway, DI configuration is used to define pools of `Gateway Commands` with related infrastructure and to configure `Payment Method Facade` (used by `Sales` and `Checkout` modules to perform commands)
 
-Payment Method Facade configuration:
+Payment Method Facade configuration: 
 ```xml
 <!-- Payment Method Facade configuration -->
 <virtualType name="PayfullFacade" type="Magento\Payment\Model\Method\Adapter">
